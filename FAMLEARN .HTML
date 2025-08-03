@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FamLearn - Advanced Family Quiz App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .screen {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+        }
+
+        .btn.danger {
+            background: linear-gradient(45deg, #ff7675, #e17055);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .quiz-container {
+            text-align: center;
+        }
+
+        .question {
+            background: #f8f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+
+        .question h3 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .rewards {
+            background: linear-gradient(45deg, #ffecd2, #fcb69f);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .rewards h3 {
+            color: #d63384;
+            margin-bottom: 15px;
+        }
+
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .leaderboard {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .leaderboard h3 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .medal {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            border-radius: 20px;
+            color: white;
+        }
+
+        .score-display h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            background: #f0f4ff;
+            border-color: #4ECDC4;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            transition: width 0.3s;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .scanner-area {
+            border: 2px dashed #4ECDC4;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: #f0fff4;
+            margin: 20px 0;
+        }
+
+        .timer-display {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .timer-display.paused {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .lifelines {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .lifeline {
+            background: linear-gradient(45deg, #fdcb6e, #e17055);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .lifeline:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .lifeline:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .question-bank {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .bank-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .bank-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .bank-item.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .scan-preview {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 15px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .ai-processing {
+            background: linear-gradient(45deg, #a29bfe, #6c5ce7);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .wallet-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #667eea;
+        }
+
+        .camera-view {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .question-bank {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 FamLearn Pro</h1>
+            <p>Advanced AI-Powered Family Learning Platform</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showScreen('setup')">Setup</button>
+            <button class="nav-tab" onclick="showScreen('scanner')">Scanner</button>
+            <button class="nav-tab" onclick="showScreen('questions')">Question Bank</button>
+            <button class="nav-tab" onclick="showScreen('quiz')">Quiz</button>
+            <button class="nav-tab" onclick="showScreen('results')">Results</button>
+            <button class="nav-tab" onclick="showScreen('leaderboard')">Leaderboard</button>
+        </div>
+
+        <!-- Setup Screen -->
+        <div class="screen active" id="setup">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">📚 Create Your Family Profile</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">👨‍👩‍👧‍👦 Family Details</h3>
+                    
+                    <div class="form-group">
+                        <label>Parent Name *</label>
+                        <input type="text" id="parentName" placeholder="Enter parent name" value="Raj Sharma">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parent Email *</label>
+                        <input type="email" id="parentEmail" placeholder="parent@email.com" value="raj.sharma@gmail.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parent Phone *</label>
+                        <input type="tel" id="parentPhone" placeholder="+91 9876543210" value="+91 9876543210">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Child Name *</label>
+                        <input type="text" id="childName" placeholder="Enter child name" value="Aarav Sharma">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Child Email (Optional)</label>
+                        <input type="email" id="childEmail" placeholder="child@email.com" value="aarav.sharma@gmail.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Child Phone (Optional)</label>
+                        <input type="tel" id="childPhone" placeholder="+91 9876543211" value="+91 9876543211">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Grade *</label>
+                        <select id="grade">
+                            <option value="">Select Grade</option>
+                            <option value="9" selected>Grade 9</option>
+                            <option value="10">Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Subject *</label>
+                        <select id="subject">
+                            <option value="">Select Subject</option>
+                            <option value="math">Mathematics</option>
+                            <option value="science" selected>Science</option>
+                            <option value="english">English</option>
+                            <option value="history">History</option>
+                            <option value="geography">Geography</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">📖 Textbook Details</h3>
+                    
+                    <div class="form-group">
+                        <label>Textbook Name</label>
+                        <input type="text" id="textbook" placeholder="Enter textbook name" value="NCERT Science Grade 9">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Chapter/Topic</label>
+                        <input type="text" id="chapter" placeholder="e.g., Chapter 12 - Natural Resources" value="Chapter 12 - Natural Resources">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Upload PDF (Optional)</label>
+                        <div class="upload-area" onclick="document.getElementById('pdfUpload').click()">
+                            <div style="font-size: 3em; margin-bottom: 10px;">📄</div>
+                            <p>Click to upload PDF or use Scanner instead</p>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">AI will analyze and create quiz questions</p>
+                        </div>
+                        <input type="file" id="pdfUpload" accept=".pdf" style="display: none;">
+                    </div>
+                    
+                    <div class="rewards">
+                        <h3>🎁 Reward System</h3>
+                        <div class="reward-item">
+                            <span>60-79% Score</span>
+                            <strong>₹500</strong>
+                        </div>
+                        <div class="reward-item">
+                            <span>80-99% Score</span>
+                            <strong>₹800</strong>
+                        </div>
+                        <div class="reward-item">
+                            <span>100% Score</span>
+                            <strong>₹1000</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Digital Wallet Section -->
+                    <div class="wallet-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">💳 Family Wallet</h3>
+                            <label style="display: flex; align-items: center; font-size: 0.9em;">
+                                <input type="checkbox" id="enableWallet" checked style="margin-right: 8px; transform: scale(1.2);">
+                                Enable Auto-Transfer
+                            </label>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.9em; opacity: 0.8;">Parent's Balance</div>
+                                    <div style="font-size: 1.5em; font-weight: bold;" id="parentBalance">₹2,500</div>
+                                </div>
+                                <button class="btn" onclick="addMoney()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); font-size: 0.9em; padding: 8px 15px;">
+                                    + Add Money
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;">
+                            <div style="font-size: 0.9em; opacity: 0.8;">Child's Balance</div>
+                            <div style="font-size: 1.3em; font-weight: bold;" id="childBalance">₹850</div>
+                            <div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">Last reward: ₹800 (Quiz Score: 85%)</div>
+                        </div>
+                        
+                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 15px; text-align: center;">
+                            🔒 Secure payments powered by UPI & Bank Integration
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="saveProfile()">💾 Save Profile</button>
+                <button class="btn secondary" onclick="showScreen('scanner')">📱 Start with Scanner</button>
+            </div>
+        </div>
+
+        <!-- Scanner Screen -->
+        <div class="screen" id="scanner">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">📱 Smart Textbook Scanner</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">📸 Scan Textbook Pages</h3>
+                    
+                    <div class="scanner-area">
+                        <div style="font-size: 3em; margin-bottom: 15px;">📷</div>
+                        <p style="margin-bottom: 15px;">Position your textbook page clearly</p>
+                        
+                        <video id="cameraView" class="camera-view" autoplay style="display: none;"></video>
+                        <canvas id="scanCanvas" style="display: none;"></canvas>
+                        
+                        <div id="scanPreview" style="margin: 15px 0;">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmNGZmIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzY2NyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhcHR1cmVkIHBhZ2Ugd2lsbCBhcHBlYXIgaGVyZTwvdGV4dD48L3N2Zz4=" alt="Scan Preview" class="scan-preview">
+                        </div>
+                        
+                        <button class="btn" onclick="startCamera()">📷 Start Camera</button>
+                        <button class="btn secondary" onclick="capturePage()" id="captureBtn" style="display: none;">📸 Capture Page</button>
+                        <button class="btn danger" onclick="stopCamera()" id="stopBtn" style="display: none;">🛑 Stop Camera</button>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #333; margin-bottom: 10px;">📂 Upload Alternative</h4>
+                        <div class="upload-area" onclick="document.getElementById('imageUpload').click()" style="padding: 20px;">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🖼️</div>
+                            <p>Click to upload image of textbook page</p>
+                        </div>
+                        <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">🤖 AI Processing</h3>
+                    
+                    <div id="aiStatus" class="ai-processing" style="display: none;">
+                        <div class="pulse" style="font-size: 2em; margin-bottom: 15px;">🧠</div>
+                        <h4>AI is analyzing your textbook...</h4>
+                        <div class="progress-bar" style="margin: 20px 0;">
+                            <div class="progress-fill" id="aiProgress" style="width: 0%;"></div>
+                        </div>
+                        <p id="aiStatusText">Extracting text from image...</p>
+                    </div>
+                    
+                    <div id="extractedContent" style="display: none;">
+                        <h4 style="color: #333; margin-bottom: 15px;">📝 Extracted Content</h4>
+                        <div style="background: #f8f9ff; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; max-height: 300px; overflow-y: auto;">
+                            <p id="extractedText">Scanned content will appear here...</p>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4 style="color: #333; margin-bottom: 15px;">⚙️ Quiz Generation Options</h4>
+                            
+                            <div class="form-group">
+                                <label>Number of Questions</label>
+                                <select id="numQuestions">
+                                    <option value="5">5 Questions</option>
+                                    <option value="10" selected>10 Questions</option>
+                                    <option value="15">15 Questions</option>
+                                    <option value="20">20 Questions</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Difficulty Level</label>
+                                <select id="difficulty">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                    <option value="mixed">Mixed</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Question Types</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <label style="display: flex; align-items: center;">
+                                        <input type="checkbox" checked style="margin-right: 8px;"> Multiple Choice
+                                    </label>
+                                    <label style="display: flex; align-items: center;">
+                                        <input type="checkbox" style="margin-right: 8px;"> True/False
+                                    </label>
+                                    <label style="display: flex; align-items: center;">
+                                        <input type="checkbox" style="margin-right: 8px;"> Fill in Blanks
+                                    </label>
+                                    <label style="display: flex; align-items: center;">
+                                        <input type="checkbox" style="margin-right: 8px;"> Short Answer
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button class="btn" onclick="generateQuizFromScan()">🎯 Generate Fresh Quiz</button>
+                            <button class="btn secondary" onclick="addToQuestionBank()">📚 Add to Question Bank</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Bank Screen -->
+        <div class="screen" id="questions">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">📚 Question Bank Manager</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px;">
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">🗂️ Question Categories</h3>
+                    
+                    <div class="question-bank">
+                        <div class="bank-item" onclick="selectQuestionBank('all')" id="bank-all">
+                            <div style="font-size: 2em; margin-bottom: 10px;">📋</div>
+                            <h4>All Questions</h4>
+                            <p><span id="allCount">25</span> questions</p>
+                        </div>
+                        
+                        <div class="bank-item" onclick="selectQuestionBank('correct')" id="bank-correct">
+                            <div style="font-size: 2em; margin-bottom: 10px;">✅</div>
+                            <h4>Correct Answers</h4>
+                            <p><span id="correctCount">18</span> questions</p>
+                        </div>
+                        
+                        <div class="bank-item" onclick="selectQuestionBank('incorrect')" id="bank-incorrect">
+                            <div style="font-size: 2em; margin-bottom: 10px;">❌</div>
+                            <h4>Incorrect Answers</h4>
+                            <p><span id="incorrectCount">5</span> questions</p>
+                        </div>
+                        
+                        <div class="bank-item" onclick="selectQuestionBank('unanswered')" id="bank-unanswered">
+                            <div style="font-size: 2em; margin-bottom: 10px;">⏸️</div>
+                            <h4>Unanswered</h4>
+                            <p><span id="unansweredCount">2</span> questions</p>
+                        </div>
+                        
+                        <div class="bank-item" onclick="selectQuestionBank('bookmarked')" id="bank-bookmarked">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🔖</div>
+                            <h4>Bookmarked</h4>
+                            <p><span id="bookmarkedCount">8</span> questions</p>
+                        </div>
+                        
+                        <div class="bank-item" onclick="selectQuestionBank('difficult')" id="bank-difficult">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🔥</div>
+                            <h4>Most Difficult</h4>
+                            <p><span id="difficultCount">6</span> questions</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h4 style="color: #333; margin-bottom: 15px;">🎯 Create Custom Quiz</h4>
+                        <button class="btn" onclick="createCustomQuiz()" id="customQuizBtn">Create Quiz from Selected</button>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Select a category above first</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="color: #333; margin-bottom: 20px;">📝 Question Preview</h3>
+                    
+                    <div id="questionList" style="max-height: 600px; overflow-y: auto;">
+                        <div style="text-align: center; padding: 60px; color: #666;">
+                            <div style="font-size: 3em; margin-bottom: 20px;">📚</div>
+                            <p>Select a question category to view questions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="screen" id="quiz">
+            <div class="quiz-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap;">
+                    <h2 style="color: #667eea;">📝 Science Quiz</h2>
+                    <div style="background: #f8f9ff; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                        <div>Question <span id="currentQ">1</span> of <span id="totalQ">10</span></div>
+                        <div class="progress-bar" style="width: 200px; margin: 10px 0;">
+                            <div class="progress-fill" id="progressBar" style="width: 10%;"></div>
+                        </div>
+                        <div style="font-size: 0.8em; color: #666;">✅ Questions from your database</div>
+                    </div>
+                </div>
+                
+                <!-- Timer Display -->
+                <div class="timer-display" id="timerDisplay">
+                    ⏰ Time: <span id="timeRemaining">30:00</span>
+                    <div style="font-size: 0.8em; margin-top: 5px;">
+                        <span id="timerStatus">Running</span>
+                    </div>
+                </div>
+                
+                <!-- Lifelines -->
+                <div class="lifelines">
+                    <button class="lifeline" id="callFriend" onclick="useLifeline('friend')">
+                        📞 Call a Friend
+                    </button>
+                    <button class="lifeline" id="readBook" onclick="useLifeline('book')">
+                        📖 Read Textbook
+                    </button>
+                    <button class="btn secondary" onclick="pauseTimer()" id="pauseBtn">⏸️ Pause Timer</button>
+                    <button class="btn" onclick="resumeTimer()" id="resumeBtn" style="display: none;">▶️ Resume Timer</button>
+                </div>
+                
+                <div id="questionContainer">
+                    <!-- Questions will be loaded here -->
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn secondary" id="prevBtn" onclick="previousQuestion()" style="display: none;">⬅️ Previous</button>
+                    <button class="btn" id="nextBtn" onclick="nextQuestion()">Next ➡️</button>
+                    <button class="btn" onclick="bookmarkQuestion()" id="bookmarkBtn">🔖 Bookmark</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="screen" id="results">
+            <div class="score-display" id="scoreContainer">
+                <h2 id="finalScore">85%</h2>
+                <h3 style="margin-bottom: 20px;">🎉 Excellent Work, Aarav!</h3>
+                <div style="font-size: 1.5em; margin: 20px 0;">
+                    You earned: <strong style="color: #FFD700;">₹800</strong>
+                </div>
+                <p style="font-size: 1.1em; opacity: 0.9;">
+                    Great job! You and your parent make a fantastic learning team! 👨‍👦
+                </p>
+            </div>
+            
+            <div style="margin-top: 30px; background: #f8f9fa; padding: 25px; border-radius: 15px;">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #333;">📊 Detailed Analysis</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #28a745;">✅</div>
+                        <h4>Correct Answers</h4>
+                        <p style="font-size: 1.5em; font-weight: bold; color: #28a745;" id="correctAnswers">8/10</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #dc3545;">❌</div>
+                        <h4>Incorrect Answers</h4>
+                        <p style="font-size: 1.5em; font-weight: bold; color: #dc3545;" id="incorrectAnswers">2/10</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #ffc107;">⏱️</div>
+                        <h4>Time Taken</h4>
+                        <p style="font-size: 1.5em; font-weight: bold; color: #ffc107;" id="timeTaken">18:45</p>
+                    </div>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #17a2b8;">🎯</div>
+                        <h4>Lifelines Used</h4>
+                        <p style="font-size: 1.5em; font-weight: bold; color: #17a2b8;" id="lifelinesUsed">1/2</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="showScreen('leaderboard')">🏆 View Leaderboard</button>
+                <button class="btn secondary" onclick="reviewAnswers()">📝 Review Answers</button>
+                <button class="btn secondary" onclick="resetQuiz()">🔄 Take Another Quiz</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div class="screen" id="leaderboard">
+            <div class="leaderboard">
+                <h3>🏆 Grade 9 Science Leaderboard</h3>
+                <p style="text-align: center; color: #666; margin-bottom: 25px;">NCERT Science Grade 9 - This Week</p>
+                
+                <div class="leaderboard-item" style="background: linear-gradient(45deg, #FFD700, #FFA000);">
+                    <div style="display: flex; align-items: center;">
+                        <span class="medal">🥇</span>
+                        <div>
+                            <strong>Priya Singh</strong>
+                            <div style="font-size: 0.9em; color: #666;">Delhi Public School</div>
+                        </div>
+                    </div>
+                    <strong>96%</strong>
+                </div>
+                
+                <div class="leaderboard-item" style="background: linear-gradient(45deg, #C0C0C0, #A0A0A0);">
+                    <div style="display: flex; align-items: center;">
+                        <span class="medal">🥈</span>
+                        <div>
+                            <strong>Arjun Patel</strong>
+                            <div style="font-size: 0.9em; color: #666;">Ryan International</div>
+                        </div>
+                    </div>
+                    <strong>92%</strong>
+                </div>
+                
+                <div class="leaderboard-item" style="background: linear-gradient(45deg, #CD7F32, #B87333);">
+                    <div style="display: flex; align-items: center;">
+                        <span class="medal">🥉</span>
+                        <div>
+                            <strong>Sneha Gupta</strong>
+                            <div style="font-size: 0.9em; color: #666;">St. Mary's School</div>
+                        </div>
+                    </div>
+                    <strong>89%</strong>
+                </div>
+                
+                <div class="leaderboard-item" style="background: #e8f4fd;">
+                    <div style="display: flex; align-items: center;">
+                        <span style="margin-right: 10px; font-weight: bold; color: #667eea;">4</span>
+                        <div>
+                            <strong>Aarav Sharma (You!)</strong>
+                            <div style="font-size: 0.9em; color: #666;">Modern School</div>
+                        </div>
+                    </div>
+                    <strong>85%</strong>
+                </div>
+                
+                <div class="leaderboard-item">
+                    <div style="display: flex; align-items: center;">
+                        <span style="margin-right: 10px; font-weight: bold; color: #999;">5</span>
+                        <div>
+                            <strong>Kiran Reddy</strong>
+                            <div style="font-size: 0.9em; color: #666;">Narayana School</div>
+                        </div>
+                    </div>
+                    <strong>82%</strong>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="showScreen('setup')">📚 Create New Quiz</button>
+                <button class="btn secondary" onclick="shareResults()">📱 Share with Friends</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="lifelineModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="lifelineContent">
+                <!-- Lifeline content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = [];
+        let parentWalletBalance = 2500;
+        let childWalletBalance = 850;
+        let selectedQuestionBank = 'all';
+        let isTimerRunning = false;
+        let timerInterval;
+        let remainingTime = 1800; // 30 minutes in seconds
+        let usedLifelines = [];
+        let bookmarkedQuestions = [];
+        let cameraStream = null;
+
+        // Sample questions database
+        const sampleQuestions = [
+            {
+                id: 1,
+                question: "What is the scientific management of animal livestock called?",
+                options: ["Animal husbandry", "Veterinary science", "Zoology", "Animal breeding"],
+                correct: 0,
+                category: "agriculture",
+                difficulty: "medium",
+                isBookmarked: false,
+                userAnswer: null,
+                isCorrect: null
+            },
+            {
+                id: 2,
+                question: "Which of the following is a rabi crop?",
+                options: ["Paddy", "Maize", "Wheat", "Cotton"],
+                correct: 2,
+                category: "agriculture",
+                difficulty: "easy",
+                isBookmarked: true,
+                userAnswer: 2,
+                isCorrect: true
+            },
+            {
+                id: 3,
+                question: "What is the process of growing two or more crops simultaneously on the same field in a definite pattern called?",
+                options: ["Mixed cropping", "Inter-cropping", "Crop rotation", "Multiple cropping"],
+                correct: 1,
+                category: "agriculture",
+                difficulty: "medium",
+                isBookmarked: false,
+                userAnswer: 0,
+                isCorrect: false
+            },
+            {
+                id: 4,
+                question: "Sound waves are characterized as which type of waves?",
+                options: ["Transverse waves", "Longitudinal waves", "Electromagnetic waves", "Surface waves"],
+                correct: 1,
+                category: "physics",
+                difficulty: "medium",
+                isBookmarked: true,
+                userAnswer: 1,
+                isCorrect: true
+            },
+            {
+                id: 5,
+                question: "What is the audible range of sound for average human beings?",
+                options: ["10 Hz to 10 kHz", "20 Hz to 20 kHz", "100 Hz to 100 kHz", "1 Hz to 1 kHz"],
+                correct: 1,
+                category: "physics",
+                difficulty: "hard",
+                isBookmarked: false,
+                userAnswer: null,
+                isCorrect: null
+            },
+            {
+                id: 6,
+                question: "The minimum distance between the source and reflector for hearing a distinct echo is approximately:",
+                options: ["8.6 m", "17.2 m", "34.4 m", "68.8 m"],
+                correct: 1,
+                category: "physics",
+                difficulty: "hard",
+                isBookmarked: true,
+                userAnswer: 2,
+                isCorrect: false
+            },
+            {
+                id: 7,
+                question: "The SI unit of work is:",
+                options: ["Newton", "Watt", "Joule", "Pascal"],
+                correct: 2,
+                category: "physics",
+                difficulty: "easy",
+                isBookmarked: false,
+                userAnswer: 2,
+                isCorrect: true
+            },
+            {
+                id: 8,
+                question: "The kinetic energy of an object of mass m moving with velocity v is given by:",
+                options: ["mv", "mv²", "½mv²", "2mv²"],
+                correct: 2,
+                category: "physics",
+                difficulty: "medium",
+                isBookmarked: false,
+                userAnswer: 1,
+                isCorrect: false
+            },
+            {
+                id: 9,
+                question: "According to the law of conservation of energy:",
+                options: ["Energy can be created but not destroyed", "Energy can be destroyed but not created", "Energy can neither be created nor destroyed", "Energy is always constant"],
+                correct: 2,
+                category: "physics",
+                difficulty: "medium",
+                isBookmarked: true,
+                userAnswer: 2,
+                isCorrect: true
+            },
+            {
+                id: 10,
+                question: "Which technique is used for examination of the foetus during pregnancy?",
+                options: ["Echocardiography", "Ultrasonography", "Radiography", "Endoscopy"],
+                correct: 1,
+                category: "biology",
+                difficulty: "easy",
+                isBookmarked: false,
+                userAnswer: null,
+                isCorrect: null
+            }
+        ];
+
+        let currentQuizQuestions = [...sampleQuestions];
+
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(screenId).classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const tabs = document.querySelectorAll('.nav-tab');
+                if (screenId === 'setup') tabs[0].classList.add('active');
+                else if (screenId === 'scanner') tabs[1].classList.add('active');
+                else if (screenId === 'questions') tabs[2].classList.add('active');
+                else if (screenId === 'quiz') tabs[3].classList.add('active');
+                else if (screenId === 'results') tabs[4].classList.add('active');
+                else if (screenId === 'leaderboard') tabs[5].classList.add('active');
+            }
+            
+            if (screenId === 'quiz') {
+                startTimer();
+                loadQuestion();
+            } else if (screenId !== 'quiz') {
+                stopTimer();
+            }
+            
+            if (screenId === 'questions') {
+                updateQuestionBankStats();
+            }
+        }
+
+        // Profile management
+        function saveProfile() {
+            const parentName = document.getElementById('parentName').value;
+            const parentEmail = document.getElementById('parentEmail').value;
+            const childName = document.getElementById('childName').value;
+            
+            if (!parentName || !parentEmail || !childName) {
+                alert('Please fill in required fields: Parent Name, Parent Email, and Child Name!');
+                return;
+            }
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(parentEmail)) {
+                alert('Please enter a valid parent email address!');
+                return;
+            }
+            
+            alert('✅ Profile saved successfully! You can now scan textbooks or create quizzes.');
+        }
+
+        // Camera and scanner functions
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                
+                const video = document.getElementById('cameraView');
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                
+                document.getElementById('captureBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                
+                alert('📷 Camera started! Position your textbook page clearly and click Capture.');
+            } catch (error) {
+                console.error('Camera error:', error);
+                alert('❌ Camera access denied or not available. Please use the upload option instead.');
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                document.getElementById('cameraView').style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'none';
+            }
+        }
+
+        function capturePage() {
+            const video = document.getElementById('cameraView');
+            const canvas = document.getElementById('scanCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg');
+            document.querySelector('.scan-preview').src = imageData;
+            
+            stopCamera();
+            processScannedImage(imageData);
+        }
+
+        function processScannedImage(imageData) {
+            document.getElementById('aiStatus').style.display = 'block';
+            const progress = document.getElementById('aiProgress');
+            const statusText = document.getElementById('aiStatusText');
+            
+            // Simulate AI processing
+            let progressValue = 0;
+            const interval = setInterval(() => {
+                progressValue += Math.random() * 15;
+                if (progressValue > 100) progressValue = 100;
+                
+                progress.style.width = progressValue + '%';
+                
+                if (progressValue < 30) {
+                    statusText.textContent = 'Extracting text from image...';
+                } else if (progressValue < 60) {
+                    statusText.textContent = 'Analyzing content structure...';
+                } else if (progressValue < 90) {
+                    statusText.textContent = 'Identifying key concepts...';
+                } else {
+                    statusText.textContent = 'Generating quiz questions...';
+                }
+                
+                if (progressValue >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('aiStatus').style.display = 'none';
+                        showExtractedContent();
+                    }, 1000);
+                }
+            }, 200);
+        }
+
+        function showExtractedContent() {
+            document.getElementById('extractedContent').style.display = 'block';
+            document.getElementById('extractedText').textContent = `
+Natural Resources Management
+
+Natural resources are materials and components that exist within the environment that are useful to humans. These include water, soil, air, forests, wildlife, and minerals. Proper management of these resources is essential for sustainable development.
+
+Key Concepts:
+1. Renewable vs Non-renewable resources
+2. Conservation methods
+3. Sustainable utilization
+4. Environmental impact assessment
+
+The scientific management of animal livestock, known as animal husbandry, plays a crucial role in resource management. This practice involves the breeding, feeding, and caring of domestic animals for agricultural purposes.
+
+Water management is another critical aspect, involving the planning, development, and management of water resources across all water uses.
+            `;
+        }
+
+        function generateQuizFromScan() {
+            // Simulate generating fresh questions from scanned content
+            alert('🤖 AI has generated 10 fresh questions from your scanned content! Starting quiz...');
+            showScreen('quiz');
+        }
+
+        function addToQuestionBank() {
+            alert('📚 Questions added to your question bank! You can now create custom quizzes from these questions.');
+            updateQuestionBankStats();
+        }
+
+        // Question bank management
+        function selectQuestionBank(type) {
+            selectedQuestionBank = type;
+            
+            // Update visual selection
+            document.querySelectorAll('.bank-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.getElementById(`bank-${type}`).classList.add('selected');
+            
+            displayQuestionsByType(type);
+            document.getElementById('customQuizBtn').style.display = 'inline-block';
+        }
+
+        function displayQuestionsByType(type) {
+            const container = document.getElementById('questionList');
+            let filteredQuestions = [];
+            
+            switch(type) {
+                case 'all':
+                    filteredQuestions = sampleQuestions;
+                    break;
+                case 'correct':
+                    filteredQuestions = sampleQuestions.filter(q => q.isCorrect === true);
+                    break;
+                case 'incorrect':
+                    filteredQuestions = sampleQuestions.filter(q => q.isCorrect === false);
+                    break;
+                case 'unanswered':
+                    filteredQuestions = sampleQuestions.filter(q => q.userAnswer === null);
+                    break;
+                case 'bookmarked':
+                    filteredQuestions = sampleQuestions.filter(q => q.isBookmarked);
+                    break;
+                case 'difficult':
+                    filteredQuestions = sampleQuestions.filter(q => q.difficulty === 'hard');
+                    break;
+            }
+            
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; color: #666;">
+                        <div style="font-size: 3em; margin-bottom: 20px;">📝</div>
+                        <p>No questions found in this category</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredQuestions.map((q, index) => `
+                <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 15px; border-left: 4px solid ${q.isCorrect === true ? '#28a745' : q.isCorrect === false ? '#dc3545' : '#6c757d'};">
+                    <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 10px;">
+                        <h4 style="color: #333; flex-grow: 1;">Q${index + 1}: ${q.question}</h4>
+                        <div style="display: flex; gap: 5px;">
+                            ${q.isBookmarked ? '<span style="color: #ffc107;">🔖</span>' : ''}
+                            ${q.difficulty === 'hard' ? '<span style="color: #dc3545;">🔥</span>' : ''}
+                            ${q.isCorrect === true ? '<span style="color: #28a745;">✅</span>' : ''}
+                            ${q.isCorrect === false ? '<span style="color: #dc3545;">❌</span>' : ''}
+                        </div>
+                    </div>
+                    <div style="margin-left: 20px;">
+                        ${q.options.map((option, i) => `
+                            <div style="padding: 5px 0; color: ${i === q.correct ? '#28a745' : i === q.userAnswer && i !== q.correct ? '#dc3545' : '#666'};">
+                                ${String.fromCharCode(65 + i)}. ${option}
+                                ${i === q.correct ? ' ✓' : ''}
+                                ${i === q.userAnswer && i !== q.correct ? ' ✗' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateQuestionBankStats() {
+            document.getElementById('allCount').textContent = sampleQuestions.length;
+            document.getElementById('correctCount').textContent = sampleQuestions.filter(q => q.isCorrect === true).length;
+            document.getElementById('incorrectCount').textContent = sampleQuestions.filter(q => q.isCorrect === false).length;
+            document.getElementById('unansweredCount').textContent = sampleQuestions.filter(q => q.userAnswer === null).length;
+            document.getElementById('bookmarkedCount').textContent = sampleQuestions.filter(q => q.isBookmarked).length;
+            document.getElementById('difficultCount').textContent = sampleQuestions.filter(q => q.difficulty === 'hard').length;
+        }
+
+        function createCustomQuiz() {
+            if (!selectedQuestionBank) {
+                alert('Please select a question category first!');
+                return;
+            }
+            
+            let quizQuestions = [];
+            
+            switch(selectedQuestionBank) {
+                case 'all':
+                    quizQuestions = [...sampleQuestions];
+                    break;
+                case 'correct':
+                    quizQuestions = sampleQuestions.filter(q => q.isCorrect === true);
+                    break;
+                case 'incorrect':
+                    quizQuestions = sampleQuestions.filter(q => q.isCorrect === false);
+                    break;
+                case 'unanswered':
+                    quizQuestions = sampleQuestions.filter(q => q.userAnswer === null);
+                    break;
+                case 'bookmarked':
+                    quizQuestions = sampleQuestions.filter(q => q.isBookmarked);
+                    break;
+                case 'difficult':
+                    quizQuestions = sampleQuestions.filter(q => q.difficulty === 'hard');
+                    break;
+            }
+            
+            if (quizQuestions.length === 0) {
+                alert('No questions available in this category!');
+                return;
+            }
+            
+            // Shuffle and limit to 10 questions max
+            currentQuizQuestions = quizQuestions.sort(() => 0.5 - Math.random()).slice(0, Math.min(10, quizQuestions.length));
+            
+            // Reset quiz state
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+            usedLifelines = [];
+            
+            alert(`🎯 Custom quiz created with ${currentQuizQuestions.length} questions from ${selectedQuestionBank} category!`);
+            showScreen('quiz');
+        }
+
+        // Timer functions
+        function startTimer() {
+            if (!isTimerRunning) {
+                isTimerRunning = true;
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('timerStatus').textContent = 'Running';
+                document.getElementById('timerDisplay').classList.remove('paused');
+            }
+        }
+
+        function pauseTimer() {
+            if (isTimerRunning) {
+                isTimerRunning = false;
+                clearInterval(timerInterval);
+                document.getElementById('timerStatus').textContent = 'Paused';
+                document.getElementById('timerDisplay').classList.add('paused');
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'inline-block';
+            }
+        }
+
+        function resumeTimer() {
+            startTimer();
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            document.getElementById('resumeBtn').style.display = 'none';
+        }
+
+        function stopTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function updateTimer() {
+            if (remainingTime > 0) {
+                remainingTime--;
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                document.getElementById('timeRemaining').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                stopTimer();
+                alert('⏰ Time\'s up! Submitting your quiz...');
+                finishQuiz();
+            }
+        }
+
+        // Lifeline functions
+        function useLifeline(type) {
+            if (usedLifelines.includes(type)) {
+                alert('❌ You have already used this lifeline!');
+                return;
+            }
+            
+            usedLifelines.push(type);
+            pauseTimer();
+            
+            if (type === 'friend') {
+                document.getElementById('callFriend').disabled = true;
+                showLifelineModal('friend');
+            } else if (type === 'book') {
+                document.getElementById('readBook').disabled = true;
+                showLifelineModal('book');
+            }
+        }
+
+        function showLifelineModal(type) {
+            const modal = document.getElementById('lifelineModal');
+            const content = document.getElementById('lifelineContent');
+            
+            if (type === 'friend') {
+                content.innerHTML = `
+                    <h3>📞 Call a Friend</h3>
+                    <div style="margin: 20px 0;">
+                        <p>Calling your friend...</p>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                            <p><strong>Friend:</strong> "Hi! For this question about ${currentQuizQuestions[currentQuestion].question.substring(0, 50)}..., I think the answer might be option ${String.fromCharCode(65 + Math.floor(Math.random() * 4))}. But I'm not 100% sure. What do you think?"</p>
+                        </div>
+                        <p><em>Remember: Your friend's answer might not always be correct!</em></p>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="btn" onclick="closeModal(); resumeTimer();">📞 End Call & Continue</button>
+                    </div>
+                `;
+            } else if (type === 'book') {
+                content.innerHTML = `
+                    <h3>📖 Read Textbook</h3>
+                    <div style="margin: 20px 0;">
+                        <p>Here's the relevant section from your textbook:</p>
+                        <div style="background: #f8f9ff; padding: 20px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #667eea; max-height: 300px; overflow-y: auto;">
+                            <p><strong>Chapter 12: Natural Resources</strong></p>
+                            <p>The scientific management of animal livestock involves systematic breeding, feeding, and healthcare practices. This field, known as animal husbandry, encompasses various techniques for optimizing animal productivity while ensuring animal welfare.</p>
+                            <p>Key aspects include proper nutrition management, disease prevention, breeding programs, and housing facilities that meet the physiological needs of different animal species.</p>
+                        </div>
+                        <p><em>Use this information to help answer the current question.</em></p>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="btn" onclick="closeModal(); resumeTimer();">📖 Close Book & Continue</button>
+                    </div>
+                `;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('lifelineModal').style.display = 'none';
+        }
+
+        // Quiz functions
+        function loadQuestion() {
+            if (currentQuestion >= currentQuizQuestions.length) {
+                finishQuiz();
+                return;
+            }
+            
+            const container = document.getElementById('questionContainer');
+            const question = currentQuizQuestions[currentQuestion];
+            
+            container.innerHTML = `
+                <div class="question">
+                    <h3>${question.question}</h3>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option" onclick="selectOption(${index})" data-index="${index}">
+                                ${String.fromCharCode(65 + index)}. ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            document.getElementById('totalQ').textContent = currentQuizQuestions.length;
+            
+            const progress = ((currentQuestion + 1) / currentQuizQuestions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            document.getElementById('prevBtn').style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+            document.getElementById('nextBtn').textContent = currentQuestion === currentQuizQuestions.length - 1 ? 'Finish Quiz 🏁' : 'Next ➡️';
+            
+            // Update bookmark button
+            const bookmarkBtn = document.getElementById('bookmarkBtn');
+            if (question.isBookmarked) {
+                bookmarkBtn.textContent = '🔖 Bookmarked';
+                bookmarkBtn.style.background = '#ffc107';
+            } else {
+                bookmarkBtn.textContent = '🔖 Bookmark';
+                bookmarkBtn.style.background = 'linear-gradient(45deg, #FF6B6B, #4ECDC4)';
+            }
+            
+            // Restore previous answer if exists
+            if (userAnswers[currentQuestion] !== undefined) {
+                document.querySelector(`[data-index="${userAnswers[currentQuestion]}"]`).classList.add('selected');
+            }
+        }
+
+        function selectOption(index) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+            userAnswers[currentQuestion] = index;
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentQuestion] === undefined) {
+                alert('Please select an answer before proceeding!');
+                return;
+            }
+            
+            if (currentQuestion < currentQuizQuestions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        }
+
+        function bookmarkQuestion() {
+            const question = currentQuizQuestions[currentQuestion];
+            question.isBookmarked = !question.isBookmarked;
+            
+            // Update the original question in sampleQuestions
+            const originalIndex = sampleQuestions.findIndex(q => q.id === question.id);
+            if (originalIndex !== -1) {
+                sampleQuestions[originalIndex].isBookmarked = question.isBookmarked;
+            }
+            
+            const bookmarkBtn = document.getElementById('bookmarkBtn');
+            if (question.isBookmarked) {
+                bookmarkBtn.textContent = '🔖 Bookmarked';
+                bookmarkBtn.style.background = '#ffc107';
+                alert('🔖 Question bookmarked for later review!');
+            } else {
+                bookmarkBtn.textContent = '🔖 Bookmark';
+                bookmarkBtn.style.background = 'linear-gradient(45deg, #FF6B6B, #4ECDC4)';
+                alert('📝 Bookmark removed from question');
+            }
+        }
+
+        function finishQuiz() {
+            stopTimer();
+            
+            score = 0;
+            for (let i = 0; i < currentQuizQuestions.length; i++) {
+                if (userAnswers[i] === currentQuizQuestions[i].correct) {
+                    score++;
+                }
+            }
+            
+            const percentage = Math.round((score / currentQuizQuestions.length) * 100);
+            let reward = 0;
+            
+            if (percentage >= 100) reward = 1000;
+            else if (percentage >= 80) reward = 800;
+            else if (percentage >= 60) reward = 500;
+            
+            // Update question bank with results
+            for (let i = 0; i < currentQuizQuestions.length; i++) {
+                const question = currentQuizQuestions[i];
+                const originalIndex = sampleQuestions.findIndex(q => q.id === question.id);
+                if (originalIndex !== -1) {
+                    sampleQuestions[originalIndex].userAnswer = userAnswers[i];
+                    sampleQuestions[originalIndex].isCorrect = userAnswers[i] === question.correct;
+                }
+            }
+            
+            updateQuestionBankStats();
+            
+            // Handle wallet transfer
+            let transferMessage = '';
+            if (reward > 0) {
+                const transferSuccess = transferReward(reward);
+                if (transferSuccess) {
+                    transferMessage = `
+                        <div style="font-size: 1.5em; margin: 20px 0;">
+                            💰 Reward Earned: <strong style="color: #FFD700;">₹${reward}</strong>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                            <div style="font-size: 1.1em; margin-bottom: 10px;">✅ Auto-transferred to Child's Wallet</div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                                <span>Parent Balance: ₹${parentWalletBalance.toLocaleString()}</span>
+                                <span>Child Balance: ₹${childWalletBalance.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    transferMessage = `
+                        <div style="font-size: 1.5em; margin: 20px 0;">
+                            🎁 Reward Earned: <strong style="color: #FFD700;">₹${reward}</strong>
+                        </div>
+                        <div style="background: rgba(255,100,100,0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                            <div style="font-size: 1.1em; margin-bottom: 10px;">⚠️ Insufficient Parent Balance</div>
+                            <div style="font-size: 0.9em;">Please add money to wallet for auto-transfer</div>
+                        </div>
+                    `;
+                }
+            } else {
+                transferMessage = `
+                    <div style="font-size: 1.2em; margin: 20px 0; opacity: 0.8;">
+                        💪 Keep studying to earn rewards!
+                    </div>
+                `;
+            }
+            
+            document.getElementById('scoreContainer').innerHTML = `
+                <h2 id="finalScore">${percentage}%</h2>
+                <h3 style="margin-bottom: 20px;">${percentage >= 80 ? '🎉 Excellent Work!' : 
+                    percentage >= 60 ? '👏 Good Job!' : 
+                    '💪 Keep Practicing!'}</h3>
+                ${transferMessage}
+                <p style="font-size: 1.1em; opacity: 0.9;">
+                    Great job! You and your parent make a fantastic learning team! 👨‍👦
+                </p>
+            `;
+            
+            // Update detailed analysis
+            const timeTaken = (1800 - remainingTime);
+            const minutes = Math.floor(timeTaken / 60);
+            const seconds = timeTaken % 60;
+            
+            document.getElementById('correctAnswers').textContent = `${score}/${currentQuizQuestions.length}`;
+            document.getElementById('incorrectAnswers').textContent = `${currentQuizQuestions.length - score}/${currentQuizQuestions.length}`;
+            document.getElementById('timeTaken').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('lifelinesUsed').textContent = `${usedLifelines.length}/2`;
+                
+            showScreen('results');
+        }
+
+        // Wallet functions
+        function addMoney() {
+            const amount = prompt("Enter amount to add to your wallet (₹):");
+            if (amount && !isNaN(amount) && amount > 0) {
+                parentWalletBalance += parseInt(amount);
+                document.getElementById('parentBalance').textContent = `₹${parentWalletBalance.toLocaleString()}`;
+                
+                const paymentMethods = ['UPI', 'Net Banking', 'Debit Card', 'Credit Card'];
+                const selectedMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+                
+                setTimeout(() => {
+                    alert(`✅ ₹${amount} added successfully via ${selectedMethod}!\nNew balance: ₹${parentWalletBalance.toLocaleString()}`);
+                }, 1000);
+            }
+        }
+
+        function transferReward(amount) {
+            const isWalletEnabled = document.getElementById('enableWallet').checked;
+            
+            if (isWalletEnabled && parentWalletBalance >= amount) {
+                parentWalletBalance -= amount;
+                childWalletBalance += amount;
+                
+                document.getElementById('parentBalance').textContent = `₹${parentWalletBalance.toLocaleString()}`;
+                document.getElementById('childBalance').textContent = `₹${childWalletBalance.toLocaleString()}`;
+                
+                return true;
+            }
+            return false;
+        }
+
+        // Additional functions
+        function reviewAnswers() {
+            alert('📝 Answer review feature will show detailed explanations for each question. This would redirect to a detailed review screen in the full app.');
+        }
+
+        function shareResults() {
+            const childName = document.getElementById('childName').value;
+            const percentage = document.getElementById('finalScore').textContent;
+            alert(`🎉 Great job! Shared "${childName} scored ${percentage} in Science Quiz!" with family group chat!`);
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+            usedLifelines = [];
+            remainingTime = 1800;
+            
+            // Reset lifeline buttons
+            document.getElementById('callFriend').disabled = false;
+            document.getElementById('readBook').disabled = false;
+            
+            // Reset the upload area
+            document.querySelector('.upload-area').innerHTML = `
+                <div style="font-size: 3em; margin-bottom: 10px;">📄</div>
+                <p>Click to upload PDF or use Scanner instead</p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 10px;">AI will analyze and create quiz questions</p>
+            `;
+            
+            showScreen('setup');
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQuestionBankStats();
+            
+            // Handle wallet toggle
+            document.getElementById('enableWallet').addEventListener('change', function(e) {
+                if (e.target.checked) {
+                    alert('✅ Auto-transfer enabled! Rewards will be automatically transferred to child\'s account.');
+                } else {
+                    alert('⚠️ Auto-transfer disabled. Rewards will be tracked but not transferred automatically.');
+                }
+            });
+
+            // Handle file uploads
+            document.getElementById('pdfUpload').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    document.querySelector('.upload-area').innerHTML = `
+                        <div style="font-size: 2em; margin-bottom: 10px;">✅</div>
+                        <p><strong>${e.target.files[0].name}</strong></p>
+                        <p style="font-size: 0.9em; color: #666;">Ready for AI processing!</p>
+                    `;
+                }
+            });
+
+            document.getElementById('imageUpload').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.querySelector('.scan-preview').src = event.target.result;
+                        processScannedImage(event.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('lifelineModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes loading {
+                0% { width: 0%; }
+                100% { width: 100%; }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
