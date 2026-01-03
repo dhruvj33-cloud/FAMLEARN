@@ -5,7 +5,7 @@ Some quiz questions are missing the "block" (subtopic) field, causing incorrect 
 
 ## Fix Steps
 
-1. **Open your FamLearn app** in the browser (http://localhost or wherever you're running it)
+1. **Open your FamLearn app** in the browser and **LOGIN** (must be logged in!)
 
 2. **Open Browser Console** (Press F12, then click "Console" tab)
 
@@ -13,9 +13,11 @@ Some quiz questions are missing the "block" (subtopic) field, causing incorrect 
 
 ```javascript
 async function fixMissingBlocks() {
-    const SUPABASE_URL = localStorage.getItem('SUPABASE_URL');
-    const SUPABASE_KEY = localStorage.getItem('SUPABASE_KEY');
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    if (!window.supabaseClient) {
+        console.error('❌ Please login first!');
+        return;
+    }
+    const client = window.supabaseClient;
 
     console.log('🔍 Fetching all quiz results...');
     const { data: quizzes, error } = await client.from('quiz_results').select('*');

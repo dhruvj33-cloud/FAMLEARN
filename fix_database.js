@@ -2,15 +2,13 @@
 // It will add missing "block" fields to all questions
 
 async function fixMissingBlocks() {
-    const SUPABASE_URL = localStorage.getItem('SUPABASE_URL');
-    const SUPABASE_KEY = localStorage.getItem('SUPABASE_KEY');
-
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-        console.error('❌ Supabase credentials not found in localStorage');
+    // Use the global supabaseClient that's already initialized
+    if (!window.supabaseClient) {
+        console.error('❌ supabaseClient not found. Make sure you are logged in to the app.');
         return;
     }
 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const client = window.supabaseClient;
 
     console.log('🔍 Fetching all quiz results...');
     const { data: quizzes, error } = await client
