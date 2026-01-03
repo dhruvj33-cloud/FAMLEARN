@@ -3082,14 +3082,16 @@
             
             // Calculate summary stats
             const totalQuizzes = results.length;
-            const overallAccuracy = Math.round(results.reduce((a, r) => a + (r.score / r.total_questions * 100), 0) / totalQuizzes);
-            const avgTime = Math.round(results.reduce((a, r) => a + (r.time_taken || 0), 0) / totalQuizzes / 60);
+            const totalQuestions = results.reduce((sum, r) => sum + r.total_questions, 0);
+            const totalCorrect = results.reduce((sum, r) => sum + r.score, 0);
+            const overallAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+            const avgTimePerQuestion = totalQuestions > 0 ? Math.round(results.reduce((a, r) => a + (r.time_taken || 0), 0) / totalQuestions) : 0;
             const bestScore = Math.max(...results.map(r => Math.round(r.score / r.total_questions * 100)));
-            
-            document.getElementById('perfQuizzesTaken').textContent = totalQuizzes;
+
+            document.getElementById('perfQuizzesTaken').textContent = totalQuestions;
             document.getElementById('perfOverallAccuracy').textContent = overallAccuracy + '%';
-            document.getElementById('perfAvgTime').textContent = avgTime + 'm';
-            document.getElementById('perfBestScore').textContent = bestScore + '%';
+            document.getElementById('perfAvgTime').textContent = avgTimePerQuestion + 's';
+            document.getElementById('perfCorrectCount') && (document.getElementById('perfCorrectCount').textContent = totalCorrect);
             
             // Render charts and breakdowns
             renderStudentAccuracyByDifficulty(results);
@@ -4168,7 +4170,10 @@
             if (event && event.target) event.target.classList.add('active');
 
             // Load data for specific pages
-            if (pageId === 'performance') loadStudentPerformanceAnalytics();
+            if (pageId === 'performance') {
+                updateBlockFilter();
+                loadEnhancedAnalytics();
+            }
             if (pageId === 'topics') loadStudentTopicsAnalysis();
             if (pageId === 'leaderboard') loadLeaderboard('all');
             if (pageId === 'history') loadQuizHistory();
