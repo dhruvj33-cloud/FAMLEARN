@@ -318,6 +318,37 @@
                 </div>
                 <button type="submit" class="btn">Create Account</button>
             </form>
+
+            <!-- OTP Verification Form -->
+            <div id="otpVerificationForm" style="display:none;">
+                <div style="text-align:center;margin-bottom:25px;">
+                    <div style="font-size:3em;margin-bottom:10px;">📧</div>
+                    <h3 style="margin-bottom:10px;">Verify Your Email</h3>
+                    <p style="color:var(--gray);font-size:14px;">We've sent a 6-digit code to<br><strong id="otpEmail"></strong></p>
+                </div>
+
+                <div class="form-group">
+                    <label>Enter 6-Digit OTP</label>
+                    <div style="display:flex;gap:10px;justify-content:center;margin:20px 0;">
+                        <input type="text" id="otp1" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="moveToNext(this, 'otp2')" onkeydown="moveToPrev(event, this, null)">
+                        <input type="text" id="otp2" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="moveToNext(this, 'otp3')" onkeydown="moveToPrev(event, this, 'otp1')">
+                        <input type="text" id="otp3" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="moveToNext(this, 'otp4')" onkeydown="moveToPrev(event, this, 'otp2')">
+                        <input type="text" id="otp4" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="moveToNext(this, 'otp5')" onkeydown="moveToPrev(event, this, 'otp3')">
+                        <input type="text" id="otp5" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="moveToNext(this, 'otp6')" onkeydown="moveToPrev(event, this, 'otp4')">
+                        <input type="text" id="otp6" maxlength="1" class="otp-input" style="width:50px;height:50px;text-align:center;font-size:24px;border:2px solid #e0e0e0;border-radius:8px;" oninput="autoSubmitOTP()" onkeydown="moveToPrev(event, this, 'otp5')">
+                    </div>
+                </div>
+
+                <div style="text-align:center;margin:20px 0;">
+                    <p style="color:var(--gray);font-size:14px;">
+                        Code expires in: <strong id="otpCountdown" style="color:var(--primary);">5:00</strong>
+                    </p>
+                </div>
+
+                <button class="btn" onclick="verifyOTP()" style="width:100%;margin-bottom:10px;">Verify OTP</button>
+                <button class="btn secondary" onclick="resendOTP()" id="resendBtn" style="width:100%;">Resend Code</button>
+                <button class="btn" onclick="cancelOTPVerification()" style="width:100%;margin-top:10px;background:var(--gray);">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -1847,6 +1878,9 @@
         const SUPABASE_URL = localStorage.getItem('SUPABASE_URL') || 'YOUR_SUPABASE_URL';
         const SUPABASE_KEY = localStorage.getItem('SUPABASE_KEY') || 'YOUR_SUPABASE_ANON_KEY';
         const GROQ_API_KEY = localStorage.getItem('GROQ_API_KEY') || 'YOUR_GROQ_API_KEY';
+        const BREVO_API_KEY = localStorage.getItem('BREVO_API_KEY') || 'YOUR_BREVO_API_KEY';
+        const BREVO_SENDER_EMAIL = localStorage.getItem('BREVO_SENDER_EMAIL') || 'noreply@famlearn.com';
+        const BREVO_SENDER_NAME = localStorage.getItem('BREVO_SENDER_NAME') || 'FamLearn Pro';
         const MAX_IMAGES_PER_QUIZ = 5;
         const MAX_IMAGE_SIZE_MB = 5;
         const IMAGE_COMPRESSION_QUALITY = 0.7;
@@ -1872,7 +1906,7 @@
         }
         
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         let currentUser = null;
         let currentQuiz = [];
         let currentQuestionIndex = 0;
@@ -1885,6 +1919,11 @@
         let quizStartTime = null;
         let questionTimes = [];
         let charts = {};
+
+        // OTP verification variables
+        let pendingRegistration = null;
+        let otpTimer = null;
+        let otpExpiryTime = null;
         
         // Quiz state for resume functionality
         const QUIZ_STATE_KEY = 'famlearn_quiz_state';
@@ -2714,19 +2753,14 @@
 
         async function handleRegister(e) {
             e.preventDefault();
-            console.log('=== REGISTRATION STARTED ===');
-            showLoading('Creating account...');
+            console.log('=== REGISTRATION WITH OTP STARTED ===');
+            showLoading('Sending verification code...');
 
             // Step 1: Get form values
             let name = document.getElementById('regName').value.trim();
-            console.log('1. Raw name from form:', name);
-
-            // Remove any spaces from username
             name = name.replace(/\s/g, '');
-            console.log('2. Name after removing spaces:', name);
 
             if (!name || name.length < 2) {
-                console.error('3. Name validation failed:', name);
                 hideLoading();
                 showToast('Username must be at least 2 characters (no spaces)', 'error');
                 return;
@@ -2736,8 +2770,7 @@
             const phone = document.getElementById('regPhone').value.trim();
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
-            
-            // Get parent info for students
+
             const parentEmail = role === 'student' ? document.getElementById('regParentEmail')?.value.trim() : null;
             const parentPhone = role === 'student' ? document.getElementById('regParentPhone')?.value.trim() : null;
 
@@ -2748,31 +2781,238 @@
                 return;
             }
 
-            console.log('3. Form values collected:', { name, email, phone, password: '***', role, parentEmail, parentPhone });
-            console.log('4. Supabase client initialized:', !!supabaseClient);
+            try {
+                // Generate and send OTP
+                const otp = generateOTP();
+                console.log('Generated OTP (for testing):', otp);
+
+                await sendOTPEmail(email, otp);
+                storeOTP(email, otp);
+
+                // Store registration data for later
+                pendingRegistration = {
+                    name,
+                    email,
+                    phone,
+                    password,
+                    role,
+                    parentEmail,
+                    parentPhone
+                };
+
+                // Switch to OTP verification screen
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('otpVerificationForm').style.display = 'block';
+                document.getElementById('otpEmail').textContent = email;
+
+                clearOTPInputs();
+                startOTPCountdown();
+
+                hideLoading();
+                showToast('Verification code sent to your email!', 'success');
+                console.log('=== OTP SENT SUCCESSFULLY ===');
+            } catch (error) {
+                console.error('=== OTP SEND FAILED ===');
+                console.error('Error details:', error);
+                hideLoading();
+                showToast(error.message || 'Failed to send verification code. Please try again.', 'error');
+            }
+        }
+
+        // ========================================
+        // OTP VERIFICATION FUNCTIONS
+        // ========================================
+
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        async function sendOTPEmail(email, otp) {
+            try {
+                const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'api-key': BREVO_API_KEY,
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sender: {
+                            name: BREVO_SENDER_NAME,
+                            email: BREVO_SENDER_EMAIL
+                        },
+                        to: [{
+                            email: email,
+                            name: email.split('@')[0]
+                        }],
+                        subject: 'Your FamLearn Verification Code',
+                        htmlContent: `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <style>
+                                    body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+                                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                                    .otp-box { background: white; border: 2px solid #667eea; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #667eea; margin: 20px 0; border-radius: 10px; }
+                                    .footer { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <div class="header">
+                                        <h1>🎓 FamLearn Pro</h1>
+                                        <p>Email Verification</p>
+                                    </div>
+                                    <div class="content">
+                                        <p>Hello!</p>
+                                        <p>Thank you for registering with FamLearn Pro. Please use the following verification code to complete your registration:</p>
+                                        <div class="otp-box">${otp}</div>
+                                        <p><strong>This code will expire in 5 minutes.</strong></p>
+                                        <p>If you didn't request this code, please ignore this email.</p>
+                                    </div>
+                                    <div class="footer">
+                                        <p>&copy; 2026 FamLearn Pro - AI-Powered Learning Analytics</p>
+                                    </div>
+                                </div>
+                            </body>
+                            </html>
+                        `
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to send OTP email');
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Brevo API Error:', error);
+                throw error;
+            }
+        }
+
+        function storeOTP(email, otp) {
+            const otpData = {
+                email: email,
+                otp: otp,
+                expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutes
+            };
+            localStorage.setItem('pending_otp', JSON.stringify(otpData));
+        }
+
+        function getStoredOTP(email) {
+            const stored = localStorage.getItem('pending_otp');
+            if (!stored) return null;
+
+            const otpData = JSON.parse(stored);
+            if (otpData.email !== email || Date.now() > otpData.expiresAt) {
+                localStorage.removeItem('pending_otp');
+                return null;
+            }
+
+            return otpData.otp;
+        }
+
+        function moveToNext(current, nextId) {
+            if (current.value.length === 1 && nextId) {
+                document.getElementById(nextId).focus();
+            }
+        }
+
+        function moveToPrev(event, current, prevId) {
+            if (event.key === 'Backspace' && current.value === '' && prevId) {
+                document.getElementById(prevId).focus();
+            }
+        }
+
+        function startOTPCountdown() {
+            otpExpiryTime = Date.now() + (5 * 60 * 1000);
+
+            if (otpTimer) clearInterval(otpTimer);
+
+            otpTimer = setInterval(() => {
+                const remaining = Math.max(0, Math.floor((otpExpiryTime - Date.now()) / 1000));
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+
+                document.getElementById('otpCountdown').textContent =
+                    `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                if (remaining === 0) {
+                    clearInterval(otpTimer);
+                    showToast('OTP expired. Please request a new code.', 'error');
+                    document.getElementById('resendBtn').disabled = false;
+                }
+            }, 1000);
+        }
+
+        function clearOTPInputs() {
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`otp${i}`).value = '';
+            }
+            document.getElementById('otp1').focus();
+        }
+
+        function getOTPFromInputs() {
+            let otp = '';
+            for (let i = 1; i <= 6; i++) {
+                otp += document.getElementById(`otp${i}`).value;
+            }
+            return otp;
+        }
+
+        function autoSubmitOTP() {
+            const otp = getOTPFromInputs();
+            if (otp.length === 6) {
+                setTimeout(() => verifyOTP(), 300);
+            }
+        }
+
+        async function verifyOTP() {
+            const enteredOTP = getOTPFromInputs();
+
+            if (enteredOTP.length !== 6) {
+                showToast('Please enter all 6 digits', 'error');
+                return;
+            }
+
+            if (!pendingRegistration) {
+                showToast('No pending registration found', 'error');
+                return;
+            }
+
+            const storedOTP = getStoredOTP(pendingRegistration.email);
+
+            if (!storedOTP) {
+                showToast('OTP expired. Please request a new code.', 'error');
+                return;
+            }
+
+            if (enteredOTP !== storedOTP) {
+                showToast('Invalid OTP. Please try again.', 'error');
+                clearOTPInputs();
+                return;
+            }
+
+            // OTP verified! Now create the account
+            showLoading('Creating your account...');
+            clearInterval(otpTimer);
 
             try {
-                // Step 2: Create auth user
-                console.log('5. Calling supabaseClient.auth.signUp...');
+                const { name, email, phone, password, role, parentEmail, parentPhone } = pendingRegistration;
+
+                // Create auth user
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email, password, options: { data: { name, role } }
                 });
 
-                console.log('6. Auth response:', { authData, authError });
+                if (authError) throw authError;
+                if (!authData || !authData.user) throw new Error('Failed to create user account');
 
-                if (authError) {
-                    console.error('7. Auth error:', authError);
-                    throw authError;
-                }
-
-                if (!authData || !authData.user) {
-                    console.error('8. No user data returned from auth');
-                    throw new Error('Failed to create user account');
-                }
-
-                console.log('9. Auth user created successfully:', authData.user.id);
-
-                // Step 3: Insert user into database with phone and parent info
+                // Insert user into database
                 const userRecord = {
                     id: authData.user.id,
                     email,
@@ -2788,63 +3028,71 @@
                     parent_phone: parentPhone || null
                 };
 
-                console.log('10. Inserting user record into database:', userRecord);
+                const { error: insertError } = await supabaseClient.from('users').insert([userRecord]);
+                if (insertError) throw new Error('Failed to create user profile: ' + insertError.message);
 
-                const { data: insertData, error: insertError } = await supabaseClient.from('users')
-                    .insert([userRecord]);
-
-                console.log('11. Database insert response:', { insertData, insertError });
-
-                if (insertError) {
-                    console.error('12. Database insert error:', insertError);
-                    throw new Error('Failed to create user profile: ' + insertError.message);
-                }
-
-                console.log('13. User profile created successfully');
-
-                // Step 4: Auto-login the user
-                console.log('14. Auto-logging in user...');
+                // Auto-login
                 const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-                console.log('15. Auto-login response:', { loginData, loginError });
-
-                if (loginError) {
-                    console.error('16. Auto-login failed:', loginError);
-                    throw new Error('Account created but login failed: ' + loginError.message);
-                }
+                if (loginError) throw new Error('Account created but login failed: ' + loginError.message);
 
                 if (loginData.user) {
-                    console.log('17. Fetching user profile...');
-                    const { data: profile, error: profileError } = await supabaseClient.from('users')
-                        .select('*')
-                        .eq('email', email)
-                        .single();
-
-                    console.log('18. Profile fetch response:', { profile, profileError });
-
-                    if (profileError) {
-                        console.error('19. Profile fetch error:', profileError);
-                        throw new Error('Login successful but failed to load profile: ' + profileError.message);
-                    }
-
+                    const { data: profile } = await supabaseClient.from('users').select('*').eq('email', email).single();
                     currentUser = profile;
-                    console.log('20. Current user set:', currentUser);
-
                     initApp();
-                    console.log('21. App initialized');
                 }
 
+                // Clean up
+                localStorage.removeItem('pending_otp');
+                pendingRegistration = null;
+
                 hideLoading();
-                showToast('Account created!', 'success');
-                console.log('=== REGISTRATION COMPLETED SUCCESSFULLY ===');
+                document.getElementById('otpVerificationForm').style.display = 'none';
+                showToast('Account created successfully! Welcome to FamLearn!', 'success');
             } catch (error) {
-                console.error('=== REGISTRATION FAILED ===');
-                console.error('Error details:', error);
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
                 hideLoading();
                 showToast(error.message || 'Registration failed. Please try again.', 'error');
+                cancelOTPVerification();
             }
+        }
+
+        async function resendOTP() {
+            if (!pendingRegistration) {
+                showToast('No pending registration found', 'error');
+                return;
+            }
+
+            document.getElementById('resendBtn').disabled = true;
+            showLoading('Sending new code...');
+
+            try {
+                const newOTP = generateOTP();
+                await sendOTPEmail(pendingRegistration.email, newOTP);
+                storeOTP(pendingRegistration.email, newOTP);
+
+                clearOTPInputs();
+                startOTPCountdown();
+
+                hideLoading();
+                showToast('New code sent to your email!', 'success');
+
+                setTimeout(() => {
+                    document.getElementById('resendBtn').disabled = false;
+                }, 30000); // 30 seconds cooldown
+            } catch (error) {
+                hideLoading();
+                document.getElementById('resendBtn').disabled = false;
+                showToast('Failed to resend code. Please try again.', 'error');
+            }
+        }
+
+        function cancelOTPVerification() {
+            clearInterval(otpTimer);
+            localStorage.removeItem('pending_otp');
+            pendingRegistration = null;
+
+            document.getElementById('otpVerificationForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            clearOTPInputs();
         }
 
         async function handleLogin(e) {

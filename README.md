@@ -4,6 +4,7 @@ An advanced educational quiz application with Supabase integration, AI-powered q
 
 ## Features
 
+- **Email OTP Verification**: Secure registration with Brevo email verification
 - **Supabase Integration**: Authentication, database, and storage
 - **AI Quiz Generation**: GROQ-powered question generation from textbook images
 - **Dual Roles**: Student and Tutor interfaces
@@ -38,7 +39,14 @@ An advanced educational quiz application with Supabase integration, AI-powered q
 
 1. Get your API key from [console.groq.com](https://console.groq.com)
 
-### 3. Configure the Application
+### 3. Brevo Email API Setup (for OTP Verification)
+
+1. Create a free account at [brevo.com](https://www.brevo.com)
+2. Verify your sender email address in Brevo dashboard
+3. Get your API key from Settings → API Keys
+4. Copy your API key (starts with `xkeysib-...`)
+
+### 4. Configure the Application
 
 Open the application in your browser and set your API keys in the browser console:
 
@@ -46,11 +54,14 @@ Open the application in your browser and set your API keys in the browser consol
 localStorage.setItem('SUPABASE_URL', 'https://your-project.supabase.co');
 localStorage.setItem('SUPABASE_KEY', 'your-supabase-anon-key');
 localStorage.setItem('GROQ_API_KEY', 'your-groq-api-key');
+localStorage.setItem('BREVO_API_KEY', 'your-brevo-api-key');
+localStorage.setItem('BREVO_SENDER_EMAIL', 'your-verified-email@example.com');
+localStorage.setItem('BREVO_SENDER_NAME', 'FamLearn Pro');
 ```
 
 Then refresh the page.
 
-### 4. Run the Application
+### 5. Run the Application
 
 Simply open `index.html` in your browser or deploy to any static hosting service (Netlify, Vercel, GitHub Pages, etc.)
 
@@ -68,6 +79,7 @@ Refer to the Supabase dashboard to set up the required tables. The application e
 
 - HTML5, CSS3, JavaScript (Vanilla)
 - Supabase (Database, Auth, Storage)
+- Brevo (Transactional Email & OTP Verification)
 - GROQ AI API
 - Chart.js (Analytics)
 - KaTeX (Math equation rendering)

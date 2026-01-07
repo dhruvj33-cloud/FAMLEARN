@@ -9,6 +9,9 @@
 localStorage.setItem('SUPABASE_URL', 'https://your-project.supabase.co');
 localStorage.setItem('SUPABASE_KEY', 'your-supabase-anon-key-here');
 localStorage.setItem('GROQ_API_KEY', 'your-groq-api-key-here');
+localStorage.setItem('BREVO_API_KEY', 'your-brevo-api-key-here');
+localStorage.setItem('BREVO_SENDER_EMAIL', 'noreply@yourdomain.com');
+localStorage.setItem('BREVO_SENDER_NAME', 'FamLearn Pro');
 */
 
 // Method 2: Create config.js from this template (For local development)
@@ -16,6 +19,9 @@ localStorage.setItem('GROQ_API_KEY', 'your-groq-api-key-here');
 window.APP_CONFIG = {
     SUPABASE_URL: 'https://your-project.supabase.co',
     SUPABASE_KEY: 'your-supabase-anon-key-here',
-    GROQ_API_KEY: 'your-groq-api-key-here'
+    GROQ_API_KEY: 'your-groq-api-key-here',
+    BREVO_API_KEY: 'your-brevo-api-key-here',
+    BREVO_SENDER_EMAIL: 'noreply@yourdomain.com',
+    BREVO_SENDER_NAME: 'FamLearn Pro'
 };
 */
