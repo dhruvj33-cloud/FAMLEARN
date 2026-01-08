@@ -389,15 +389,15 @@
                 </div>
             </nav>
             <div class="sidebar-footer">
-                <div class="user-info-sidebar" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px;">
-                    <!-- User Header -->
-                    <div style="display:flex;align-items:center;gap:10px;">
+                <div class="user-info-sidebar" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px;position:relative;">
+                    <!-- User Header (clickable) -->
+                    <div onclick="toggleUserProfilePopup()" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
                         <div class="user-avatar" id="userAvatar">S</div>
                         <div style="flex:1;min-width:0;">
                             <div class="name" id="sidebarUserName" style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Student</div>
                             <div id="sidebarTierName" style="font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Free Trial</div>
                         </div>
-                        <button onclick="logout()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;padding:4px;" title="Logout">⏻</button>
+                        <button onclick="event.stopPropagation(); logout()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;padding:4px;" title="Logout">⏻</button>
                     </div>
 
                     <!-- Subscription Info -->
@@ -416,6 +416,52 @@
                     <button id="sidebarUpgradeBtn" onclick="showPage('pricing', event)" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;padding:8px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:none;">
                         ⚡ Upgrade Now
                     </button>
+
+                    <!-- User Profile Popup -->
+                    <div id="userProfilePopup" style="display:none;position:absolute;bottom:100%;left:12px;right:12px;margin-bottom:8px;background:#1f2937;border:1px solid #374151;border-radius:12px;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,0.5);z-index:1000;">
+                        <!-- Profile Header -->
+                        <div style="text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #374151;">
+                            <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;font-size:32px;font-weight:bold;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;" id="popupAvatar">S</div>
+                            <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:4px;" id="popupFullName">Student Name</div>
+                            <div style="font-size:12px;color:#9ca3af;" id="popupEmail">student@example.com</div>
+                            <div style="font-size:12px;color:#9ca3af;margin-top:2px;" id="popupPhone">+91 98765 43210</div>
+                        </div>
+
+                        <!-- Subscription Details -->
+                        <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <span style="font-size:24px;">🎫</span>
+                                <div style="flex:1;">
+                                    <div style="font-size:11px;color:#9ca3af;">Subscription Tier</div>
+                                    <div style="font-size:14px;font-weight:600;color:#fff;" id="popupTier">Free Trial</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <span style="font-size:24px;">⏱️</span>
+                                <div style="flex:1;">
+                                    <div style="font-size:11px;color:#9ca3af;">Expires</div>
+                                    <div style="font-size:14px;font-weight:600;color:#fbbf24;" id="popupExpiry">Jan 11, 2026</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="font-size:24px;">📝</span>
+                                <div style="flex:1;">
+                                    <div style="font-size:11px;color:#9ca3af;">Quizzes This Month</div>
+                                    <div style="font-size:14px;font-weight:600;color:#10b981;" id="popupQuizCount">4/5</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <button onclick="showPage('pricing', event); toggleUserProfilePopup()" style="background:#374151;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s;" onmouseover="this.style.background='#4b5563'" onmouseout="this.style.background='#374151'">
+                                ⚙️ Settings
+                            </button>
+                            <button onclick="logout()" style="background:#ef4444;color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                                🚪 Logout
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -2716,7 +2762,130 @@
                     upgradeBtn.style.display = 'none';
                 }
             }
+
+            // Update popup data as well
+            updateUserProfilePopup();
         }
+
+        // Toggle user profile popup
+        function toggleUserProfilePopup() {
+            const popup = document.getElementById('userProfilePopup');
+            if (!popup) return;
+
+            if (popup.style.display === 'none') {
+                updateUserProfilePopup();
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        }
+
+        // Update user profile popup with current user data
+        function updateUserProfilePopup() {
+            if (!currentUser) return;
+
+            const tierConfig = getUserTierConfig();
+            const tier = currentUser.subscription_tier || 'free';
+
+            // Update popup avatar
+            const popupAvatar = document.getElementById('popupAvatar');
+            if (popupAvatar) {
+                popupAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+            }
+
+            // Update popup name
+            const popupFullName = document.getElementById('popupFullName');
+            if (popupFullName) {
+                popupFullName.textContent = currentUser.name;
+            }
+
+            // Update popup email
+            const popupEmail = document.getElementById('popupEmail');
+            if (popupEmail) {
+                popupEmail.textContent = `📧 ${currentUser.email}`;
+            }
+
+            // Update popup phone
+            const popupPhone = document.getElementById('popupPhone');
+            if (popupPhone) {
+                if (currentUser.phone) {
+                    popupPhone.textContent = `📱 ${currentUser.phone}`;
+                    popupPhone.style.display = 'block';
+                } else {
+                    popupPhone.style.display = 'none';
+                }
+            }
+
+            // Update popup tier
+            const popupTier = document.getElementById('popupTier');
+            if (popupTier) {
+                const tierEmojis = {
+                    'free': '🎫',
+                    'learner': '📚',
+                    'pro_student': '⭐',
+                    'pro_tutor': '👨‍🏫'
+                };
+                popupTier.textContent = `${tierEmojis[tier] || '🎫'} ${tierConfig.name}`;
+            }
+
+            // Update popup expiry
+            const popupExpiry = document.getElementById('popupExpiry');
+            if (popupExpiry) {
+                let endDate;
+                if (tier === 'free' && currentUser.trial_end_date) {
+                    endDate = new Date(currentUser.trial_end_date);
+                } else if (currentUser.subscription_end_date) {
+                    endDate = new Date(currentUser.subscription_end_date);
+                }
+
+                if (endDate) {
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    popupExpiry.textContent = endDate.toLocaleDateString('en-US', options);
+
+                    // Color based on expiry
+                    const daysLeft = getDaysRemaining();
+                    if (daysLeft === 0) {
+                        popupExpiry.style.color = '#ef4444'; // Red
+                    } else if (daysLeft <= 3) {
+                        popupExpiry.style.color = '#f59e0b'; // Orange
+                    } else {
+                        popupExpiry.style.color = '#10b981'; // Green
+                    }
+                } else {
+                    popupExpiry.textContent = 'N/A';
+                    popupExpiry.style.color = '#9ca3af';
+                }
+            }
+
+            // Update popup quiz count
+            const popupQuizCount = document.getElementById('popupQuizCount');
+            if (popupQuizCount) {
+                const monthlyCount = currentUser.quizzes_created_this_month || 0;
+                const monthlyLimit = tierConfig.monthlyQuizLimit;
+                popupQuizCount.textContent = `${monthlyCount}/${monthlyLimit === 999999 ? '∞' : monthlyLimit}`;
+
+                // Color based on usage
+                if (monthlyLimit !== 999999 && monthlyCount >= monthlyLimit) {
+                    popupQuizCount.style.color = '#ef4444'; // Red
+                } else if (monthlyLimit !== 999999 && monthlyCount >= monthlyLimit * 0.8) {
+                    popupQuizCount.style.color = '#f59e0b'; // Orange
+                } else {
+                    popupQuizCount.style.color = '#10b981'; // Green
+                }
+            }
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(event) {
+            const popup = document.getElementById('userProfilePopup');
+            const sidebar = document.querySelector('.user-info-sidebar');
+
+            if (popup && sidebar && popup.style.display === 'block') {
+                if (!sidebar.contains(event.target)) {
+                    popup.style.display = 'none';
+                }
+            }
+        });
 
         // Increment quiz creation counters
         async function incrementQuizCounters() {
@@ -2829,19 +2998,47 @@
         }
 
         async function initiatePurchase(tier, amount, period) {
-            // Check if Razorpay is configured
-            const razorpayKeyId = localStorage.getItem('RAZORPAY_KEY_ID');
-            if (!razorpayKeyId || razorpayKeyId === 'YOUR_RAZORPAY_KEY_ID') {
-                showToast('Payment system not configured. Please contact support.', 'error');
-                console.error('Razorpay API key not configured');
+            console.log('========================================');
+            console.log('💳 INITIATING PAYMENT FLOW');
+            console.log('========================================');
+            console.log('Tier:', tier);
+            console.log('Amount:', amount);
+            console.log('Period:', period);
+
+            // Check if Razorpay script is loaded
+            if (typeof Razorpay === 'undefined') {
+                console.error('❌ Razorpay script not loaded!');
+                showToast('Payment system not loaded. Please refresh the page.', 'error');
                 return;
             }
+            console.log('✅ Razorpay script loaded');
+
+            // Check if Razorpay is configured
+            const razorpayKeyId = localStorage.getItem('RAZORPAY_KEY_ID');
+            console.log('Razorpay Key ID:', razorpayKeyId ? `${razorpayKeyId.substring(0, 12)}...` : 'NOT SET');
+
+            if (!razorpayKeyId || razorpayKeyId === 'YOUR_RAZORPAY_KEY_ID') {
+                console.error('❌ Razorpay API key not configured');
+                showToast('Payment system not configured. Please set RAZORPAY_KEY_ID in localStorage.', 'error');
+                console.log('💡 To configure: localStorage.setItem("RAZORPAY_KEY_ID", "rzp_test_XXXX")');
+                return;
+            }
+            console.log('✅ Razorpay key configured');
+
+            // Check if user is logged in
+            if (!currentUser || !currentUser.id) {
+                console.error('❌ User not logged in');
+                showToast('Please login to make a purchase', 'error');
+                return;
+            }
+            console.log('✅ User logged in:', currentUser.email);
 
             // Create order record in database first
             const periodMonths = period === 'yearly' ? 12 : period === 'quarterly' ? 3 : 1;
             const subscriptionEndDate = new Date();
             subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + periodMonths);
 
+            console.log('📝 Creating transaction record...');
             const orderData = {
                 user_id: currentUser.id,
                 tier: tier,
@@ -2851,6 +3048,7 @@
                 subscription_period_start: new Date().toISOString(),
                 subscription_period_end: subscriptionEndDate.toISOString()
             };
+            console.log('Order data:', orderData);
 
             try {
                 const { data: transaction, error } = await supabaseClient
@@ -2859,19 +3057,24 @@
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Database error:', error);
+                    throw error;
+                }
+
+                console.log('✅ Transaction record created:', transaction.id);
 
                 // Initialize Razorpay checkout
+                console.log('🚀 Opening Razorpay checkout...');
                 const options = {
                     key: razorpayKeyId,
                     amount: amount * 100, // Convert to paise
                     currency: 'INR',
                     name: 'FamLearn Pro',
                     description: `${SUBSCRIPTION_TIERS[tier].name} - ${period}`,
-                    image: 'https://your-logo-url.com/logo.png', // Replace with actual logo
-                    order_id: transaction.id,
+                    image: 'https://your-logo-url.com/logo.png',
                     handler: async function(response) {
-                        // Payment successful
+                        console.log('✅ Payment successful:', response);
                         await handlePaymentSuccess(transaction.id, response, tier, subscriptionEndDate);
                     },
                     prefill: {
@@ -2884,18 +3087,34 @@
                     },
                     modal: {
                         ondismiss: function() {
+                            console.log('⚠️ Payment modal dismissed');
                             showToast('Payment cancelled', 'info');
                         }
                     }
                 };
 
+                console.log('Razorpay options:', {
+                    ...options,
+                    key: razorpayKeyId.substring(0, 12) + '...'
+                });
+
                 const rzp = new Razorpay(options);
+
+                rzp.on('payment.failed', function(response) {
+                    console.error('❌ Payment failed:', response.error);
+                    showToast('Payment Failed: ' + response.error.description, 'error');
+                });
+
+                console.log('📱 Opening Razorpay popup...');
                 rzp.open();
+                console.log('✅ Razorpay popup opened');
 
             } catch (error) {
-                console.error('Error creating order:', error);
+                console.error('❌ Error in payment flow:', error);
+                console.error('Error details:', error.message, error.stack);
                 showToast('Failed to initiate payment: ' + error.message, 'error');
             }
+            console.log('========================================');
         }
 
         async function handlePaymentSuccess(transactionId, paymentResponse, tier, endDate) {
