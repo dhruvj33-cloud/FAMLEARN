@@ -6,6 +6,8 @@
     <title>FamLearn Pro - AI Learning Platform</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Razorpay Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- KaTeX for Math Equations Support -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -381,6 +383,10 @@
                 <div class="nav-item" onclick="showPage('leaderboard', event)">
                     <span class="icon">🏆</span> Leaderboard
                 </div>
+                <div class="nav-section">Account</div>
+                <div class="nav-item" onclick="showPage('pricing', event)">
+                    <span class="icon">💎</span> Upgrade Plan
+                </div>
             </nav>
             <div class="sidebar-footer">
                 <div class="user-info-sidebar">
@@ -595,8 +601,14 @@
                             <div class="question-number" id="questionNumber">Question 1</div>
                             <div class="question-text" id="questionText">Loading question...</div>
                             <div class="options-list" id="optionsList"></div>
+                            <div id="lifelineContainer" style="margin-top:15px;text-align:center;display:none;">
+                                <button class="btn btn-warning" onclick="useFiftyFifty()" id="fiftyFiftyBtn" style="padding:10px 20px;">
+                                    ⚡ 50/50 <span id="lifelineCount">(2 left)</span>
+                                </button>
+                                <div style="font-size:12px;color:var(--gray);margin-top:8px;">Eliminates 2 wrong answers</div>
+                            </div>
                         </div>
-                        
+
                         <div class="quiz-nav">
                             <button class="btn btn-secondary" onclick="skipQuestion()" id="skipBtn">Skip</button>
                             <button class="btn" onclick="nextQuestion()" id="nextBtn" style="display:none;">Next Question →</button>
@@ -998,6 +1010,9 @@
                 <div class="nav-section">Settings</div>
                 <div class="nav-item" onclick="showTutorPage('settings')">
                     <span class="icon">⚙️</span> Institute Settings
+                </div>
+                <div class="nav-item" onclick="showTutorPage('pricing')">
+                    <span class="icon">💎</span> Upgrade Plan
                 </div>
             </nav>
             <div class="sidebar-footer">
@@ -1732,6 +1747,219 @@
                     <div id="reportPreview" style="margin-top:20px;display:none;"></div>
                 </div>
             </div>
+
+            <!-- Pricing Page -->
+            <div class="page" id="pricingPage">
+                <div class="page-header">
+                    <h1 class="page-title">💎 Upgrade Your Plan</h1>
+                </div>
+
+                <!-- Current Plan Banner -->
+                <div class="card" id="currentPlanBanner" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;margin-bottom:30px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h3 style="color:white;margin-bottom:5px;">Current Plan: <span id="currentTierName">Free Trial</span></h3>
+                            <p style="opacity:0.9;margin:0;" id="currentPlanDetails">3 days remaining • 2/5 quizzes used</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:14px;opacity:0.8;">Daily Limit</div>
+                            <div style="font-size:24px;font-weight:bold;" id="dailyLimitDisplay">2/2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Cards -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:30px;">
+
+                    <!-- Learner Plan -->
+                    <div class="card" style="border:3px solid var(--primary);position:relative;">
+                        <div style="position:absolute;top:-15px;right:20px;background:var(--secondary);color:white;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:bold;">
+                            POPULAR
+                        </div>
+                        <h3 style="color:var(--primary);margin-bottom:10px;">📚 Learner</h3>
+                        <div style="display:flex;align-items:baseline;margin-bottom:20px;">
+                            <span style="font-size:2.5rem;font-weight:bold;color:var(--dark);">₹149</span>
+                            <span style="color:var(--gray);margin-left:8px;">/month</span>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 3 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 25 quizzes per month</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 25 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 2 lifelines per quiz</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Leaderboard access</div>
+                            <div style="padding:8px 0;">✅ Answer explanations</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="initiatePurchase('learner', 149, 'monthly')" style="width:100%;">
+                            Upgrade Now
+                        </button>
+                    </div>
+
+                    <!-- Pro Student Plan -->
+                    <div class="card" style="border:2px solid #e5e7eb;">
+                        <h3 style="color:var(--success);margin-bottom:10px;">🚀 Pro Student</h3>
+                        <div style="display:flex;align-items:baseline;margin-bottom:20px;">
+                            <span style="font-size:2.5rem;font-weight:bold;color:var(--dark);">₹299</span>
+                            <span style="color:var(--gray);margin-left:8px;">/month</span>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 5 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ <strong>Unlimited</strong> monthly quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 50 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 2 lifelines per quiz</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Leaderboard access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Answer explanations</div>
+                            <div style="padding:8px 0;">✅ Priority support</div>
+                        </div>
+                        <button class="btn btn-success" onclick="initiatePurchase('pro_student', 299, 'monthly')" style="width:100%;">
+                            Upgrade Now
+                        </button>
+                    </div>
+
+                    <!-- Pro Tutor Plan -->
+                    <div class="card" id="tutorPlanCard" style="border:2px solid #e5e7eb;display:none;">
+                        <h3 style="color:var(--warning);margin-bottom:10px;">👨‍🏫 Pro Tutor</h3>
+                        <div style="margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                <div>
+                                    <div style="font-size:1.8rem;font-weight:bold;color:var(--dark);">₹1,499</div>
+                                    <div style="color:var(--gray);font-size:14px;">/quarter</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:1.8rem;font-weight:bold;color:var(--dark);">₹4,999</div>
+                                    <div style="color:var(--gray);font-size:14px;">/year</div>
+                                    <div style="background:var(--success);color:white;padding:2px 8px;border-radius:4px;font-size:11px;margin-top:4px;">Save 17%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 5 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ <strong>Unlimited</strong> monthly quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 25 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Batch management</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Student progress tracking</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Quiz assignments</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics</div>
+                            <div style="padding:8px 0;">✅ Priority support</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <button class="btn btn-warning" onclick="initiatePurchase('pro_tutor', 1499, 'quarterly')" style="width:100%;">
+                                Quarterly
+                            </button>
+                            <button class="btn btn-warning" onclick="initiatePurchase('pro_tutor', 4999, 'yearly')" style="width:100%;">
+                                Yearly
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Comparison Table -->
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">📊 Feature Comparison</h3>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:var(--light);">
+                                    <th style="padding:12px;text-align:left;">Feature</th>
+                                    <th style="padding:12px;text-align:center;">Free Trial</th>
+                                    <th style="padding:12px;text-align:center;">Learner</th>
+                                    <th style="padding:12px;text-align:center;">Pro Student</th>
+                                    <th style="padding:12px;text-align:center;">Pro Tutor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Daily Quiz Limit</td>
+                                    <td style="padding:12px;text-align:center;">2</td>
+                                    <td style="padding:12px;text-align:center;">3</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Monthly Quiz Limit</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                    <td style="padding:12px;text-align:center;">Unlimited</td>
+                                    <td style="padding:12px;text-align:center;">Unlimited</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Quiz Library</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                    <td style="padding:12px;text-align:center;">50</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">50/50 Lifelines</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Analytics</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Leaderboard</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Answer Explanations</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Batch Management</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px;">Priority Support</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">❓ Frequently Asked Questions</h3>
+                    <div style="space-y:15px;">
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">What happens when my trial ends?</h4>
+                            <p style="color:var(--gray);margin:0;">Your account remains active, but you'll have limited access. Students can access their last 3 quizzes, while tutors will need to upgrade to continue creating quizzes.</p>
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">Can I cancel anytime?</h4>
+                            <p style="color:var(--gray);margin:0;">Yes! You can cancel your subscription anytime. You'll retain access until the end of your billing period.</p>
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">What payment methods do you accept?</h4>
+                            <p style="color:var(--gray);margin:0;">We accept UPI, Credit/Debit Cards, Net Banking, and Wallets through Razorpay's secure payment gateway.</p>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--primary);margin-bottom:5px;">Do you offer refunds?</h4>
+                            <p style="color:var(--gray);margin:0;">Yes, we offer a 7-day money-back guarantee if you're not satisfied with your subscription.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -1869,6 +2097,28 @@
         </div>
     </div>
 
+    <!-- Upgrade Modal -->
+    <div class="modal" id="upgradeModal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">💎 Upgrade Required</h3>
+                <button class="close-modal" onclick="closeModal('upgradeModal')">&times;</button>
+            </div>
+            <div style="text-align:center;padding:20px;">
+                <div style="font-size:4rem;margin-bottom:15px;">🚀</div>
+                <p id="upgradeModalMessage" style="font-size:16px;color:var(--dark);margin-bottom:25px;">
+                    You've reached your limit. Upgrade to continue!
+                </p>
+                <button class="btn btn-primary" onclick="closeModal('upgradeModal'); showPage('pricing', event);" style="width:100%;margin-bottom:10px;">
+                    View Pricing Plans
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('upgradeModal')" style="width:100%;">
+                    Maybe Later
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ========================================
         // CONFIGURATION
@@ -1904,7 +2154,74 @@
         function getBlocksForSubject(subject) {
             return SUBJECT_BLOCKS[subject] || ['General'];
         }
-        
+
+        // ========================================
+        // SUBSCRIPTION TIER CONFIGURATION
+        // ========================================
+        const SUBSCRIPTION_TIERS = {
+            free: {
+                name: 'Free Trial',
+                price: 0,
+                trialDays: 3,
+                dailyQuizLimit: 2,
+                monthlyQuizLimit: 5,
+                libraryLimit: 5,
+                features: {
+                    lifelines: 2,
+                    analytics: false,
+                    leaderboard: false,
+                    explanations: false,
+                    prioritySupport: false
+                }
+            },
+            learner: {
+                name: 'Learner',
+                price: 149,
+                period: 'month',
+                dailyQuizLimit: 3,
+                monthlyQuizLimit: 25,
+                libraryLimit: 25,
+                features: {
+                    lifelines: 2,
+                    analytics: true,
+                    leaderboard: true,
+                    explanations: true,
+                    prioritySupport: false
+                }
+            },
+            pro_student: {
+                name: 'Pro Student',
+                price: 299,
+                period: 'month',
+                dailyQuizLimit: 5,
+                monthlyQuizLimit: 999999,
+                libraryLimit: 50,
+                features: {
+                    lifelines: 2,
+                    analytics: true,
+                    leaderboard: true,
+                    explanations: true,
+                    prioritySupport: true
+                }
+            },
+            pro_tutor: {
+                name: 'Pro Tutor',
+                priceQuarterly: 1499,
+                priceYearly: 4999,
+                dailyQuizLimit: 5,
+                monthlyQuizLimit: 999999,
+                libraryLimit: 25,
+                features: {
+                    lifelines: 2,
+                    analytics: true,
+                    leaderboard: true,
+                    explanations: true,
+                    batchManagement: true,
+                    prioritySupport: true
+                }
+            }
+        };
+
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
@@ -1920,6 +2237,11 @@
         let questionTimes = [];
         let charts = {};
 
+        // Lifeline tracking
+        let lifelinesUsed = 0;
+        let lifelinesAvailable = 2;
+        let currentQuizId = null;
+
         // OTP verification variables
         let pendingRegistration = null;
         let otpTimer = null;
@@ -1929,6 +2251,321 @@
         const QUIZ_STATE_KEY = 'famlearn_quiz_state';
         const IMAGE_STATE_KEY = 'famlearn_image_state';
         const TUTOR_IMAGE_STATE_KEY = 'famlearn_tutor_image_state';
+
+        // ========================================
+        // SUBSCRIPTION UTILITY FUNCTIONS
+        // ========================================
+
+        // Check if user's trial or subscription has expired
+        function isSubscriptionExpired() {
+            if (!currentUser) return true;
+
+            const now = new Date();
+
+            // Check trial expiry
+            if (currentUser.subscription_tier === 'free' && currentUser.trial_end_date) {
+                const trialEnd = new Date(currentUser.trial_end_date);
+                if (now > trialEnd) return true;
+            }
+
+            // Check subscription expiry
+            if (currentUser.subscription_end_date) {
+                const subEnd = new Date(currentUser.subscription_end_date);
+                if (now > subEnd) return true;
+            }
+
+            return false;
+        }
+
+        // Check if user is in grace period (students only)
+        function isInGracePeriod() {
+            if (!currentUser || currentUser.role !== 'student') return false;
+            if (!currentUser.grace_period_end_date) return false;
+
+            const now = new Date();
+            const graceEnd = new Date(currentUser.grace_period_end_date);
+            return now <= graceEnd;
+        }
+
+        // Get user's current tier configuration
+        function getUserTierConfig() {
+            const tier = currentUser?.subscription_tier || 'free';
+            return SUBSCRIPTION_TIERS[tier] || SUBSCRIPTION_TIERS.free;
+        }
+
+        // Check if user can create a quiz (daily + monthly limits)
+        function canCreateQuiz() {
+            if (!currentUser) return false;
+
+            const tierConfig = getUserTierConfig();
+            const today = new Date().toDateString();
+            const lastCreationDate = currentUser.last_quiz_creation_date ? new Date(currentUser.last_quiz_creation_date).toDateString() : null;
+
+            // Reset daily count if it's a new day
+            let dailyCount = currentUser.quizzes_created_today || 0;
+            if (lastCreationDate !== today) {
+                dailyCount = 0;
+            }
+
+            const monthlyCount = currentUser.quizzes_created_this_month || 0;
+
+            // Check daily limit
+            if (dailyCount >= tierConfig.dailyQuizLimit) {
+                return { canCreate: false, reason: 'daily_limit', limit: tierConfig.dailyQuizLimit };
+            }
+
+            // Check monthly limit
+            if (monthlyCount >= tierConfig.monthlyQuizLimit) {
+                return { canCreate: false, reason: 'monthly_limit', limit: tierConfig.monthlyQuizLimit };
+            }
+
+            // Check library limit
+            const libraryCount = currentUser.quiz_library_count || 0;
+            if (libraryCount >= tierConfig.libraryLimit) {
+                return { canCreate: false, reason: 'library_limit', limit: tierConfig.libraryLimit };
+            }
+
+            return { canCreate: true };
+        }
+
+        // Check if feature is available for user's tier
+        function hasFeatureAccess(featureName) {
+            if (!currentUser) return false;
+
+            const tierConfig = getUserTierConfig();
+            return tierConfig.features[featureName] === true;
+        }
+
+        // Get days remaining in trial/subscription
+        function getDaysRemaining() {
+            if (!currentUser) return 0;
+
+            const now = new Date();
+            let endDate;
+
+            if (currentUser.subscription_tier === 'free' && currentUser.trial_end_date) {
+                endDate = new Date(currentUser.trial_end_date);
+            } else if (currentUser.subscription_end_date) {
+                endDate = new Date(currentUser.subscription_end_date);
+            } else {
+                return 0;
+            }
+
+            const diffTime = endDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return Math.max(0, diffDays);
+        }
+
+        // Increment quiz creation counters
+        async function incrementQuizCounters() {
+            if (!currentUser) return;
+
+            const today = new Date().toDateString();
+            const lastCreationDate = currentUser.last_quiz_creation_date ? new Date(currentUser.last_quiz_creation_date).toDateString() : null;
+
+            let dailyCount = currentUser.quizzes_created_today || 0;
+            let monthlyCount = currentUser.quizzes_created_this_month || 0;
+
+            // Reset daily count if it's a new day
+            if (lastCreationDate !== today) {
+                dailyCount = 0;
+            }
+
+            dailyCount++;
+            monthlyCount++;
+
+            const { error } = await supabaseClient
+                .from('users')
+                .update({
+                    quizzes_created_today: dailyCount,
+                    quizzes_created_this_month: monthlyCount,
+                    last_quiz_creation_date: new Date().toISOString(),
+                    quiz_library_count: (currentUser.quiz_library_count || 0) + 1
+                })
+                .eq('id', currentUser.id);
+
+            if (!error) {
+                currentUser.quizzes_created_today = dailyCount;
+                currentUser.quizzes_created_this_month = monthlyCount;
+                currentUser.last_quiz_creation_date = new Date().toISOString();
+                currentUser.quiz_library_count = (currentUser.quiz_library_count || 0) + 1;
+            }
+        }
+
+        // Show upgrade modal
+        function showUpgradeModal(reason = 'limit_reached') {
+            const modal = document.getElementById('upgradeModal');
+            if (!modal) return;
+
+            const tierConfig = getUserTierConfig();
+            let message = '';
+
+            switch(reason) {
+                case 'daily_limit':
+                    message = `You've reached your daily limit of ${tierConfig.dailyQuizLimit} quizzes. Upgrade to create more!`;
+                    break;
+                case 'monthly_limit':
+                    message = `You've reached your monthly limit of ${tierConfig.monthlyQuizLimit} quizzes. Upgrade for unlimited access!`;
+                    break;
+                case 'library_limit':
+                    message = `Your quiz library is full (${tierConfig.libraryLimit} quizzes). Upgrade to store more!`;
+                    break;
+                case 'expired':
+                    message = `Your ${currentUser.subscription_tier === 'free' ? 'trial' : 'subscription'} has expired. Upgrade to continue!`;
+                    break;
+                case 'feature_locked':
+                    message = `This feature is only available on paid plans. Upgrade now!`;
+                    break;
+                default:
+                    message = `Upgrade your plan to unlock more features!`;
+            }
+
+            document.getElementById('upgradeModalMessage').textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        // ========================================
+        // PRICING & PAYMENT FUNCTIONS
+        // ========================================
+
+        function loadPricingPageData() {
+            // Update current plan banner
+            const tierConfig = getUserTierConfig();
+            document.getElementById('currentTierName').textContent = tierConfig.name;
+
+            const daysLeft = getDaysRemaining();
+            const dailyUsed = currentUser.quizzes_created_today || 0;
+            const monthlyUsed = currentUser.quizzes_created_this_month || 0;
+
+            document.getElementById('currentPlanDetails').textContent =
+                `${daysLeft} days remaining • ${monthlyUsed}/${tierConfig.monthlyQuizLimit} quizzes used`;
+
+            document.getElementById('dailyLimitDisplay').textContent =
+                `${dailyUsed}/${tierConfig.dailyQuizLimit}`;
+
+            // Show/hide tutor plan based on role
+            if (currentUser.role === 'tutor') {
+                document.getElementById('tutorPlanCard').style.display = 'block';
+            }
+        }
+
+        async function initiatePurchase(tier, amount, period) {
+            // Check if Razorpay is configured
+            const razorpayKeyId = localStorage.getItem('RAZORPAY_KEY_ID');
+            if (!razorpayKeyId || razorpayKeyId === 'YOUR_RAZORPAY_KEY_ID') {
+                showToast('Payment system not configured. Please contact support.', 'error');
+                console.error('Razorpay API key not configured');
+                return;
+            }
+
+            // Create order record in database first
+            const periodMonths = period === 'yearly' ? 12 : period === 'quarterly' ? 3 : 1;
+            const subscriptionEndDate = new Date();
+            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + periodMonths);
+
+            const orderData = {
+                user_id: currentUser.id,
+                tier: tier,
+                amount: amount,
+                currency: 'INR',
+                payment_status: 'pending',
+                subscription_period_start: new Date().toISOString(),
+                subscription_period_end: subscriptionEndDate.toISOString()
+            };
+
+            try {
+                const { data: transaction, error } = await supabaseClient
+                    .from('subscription_transactions')
+                    .insert([orderData])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Initialize Razorpay checkout
+                const options = {
+                    key: razorpayKeyId,
+                    amount: amount * 100, // Convert to paise
+                    currency: 'INR',
+                    name: 'FamLearn Pro',
+                    description: `${SUBSCRIPTION_TIERS[tier].name} - ${period}`,
+                    image: 'https://your-logo-url.com/logo.png', // Replace with actual logo
+                    order_id: transaction.id,
+                    handler: async function(response) {
+                        // Payment successful
+                        await handlePaymentSuccess(transaction.id, response, tier, subscriptionEndDate);
+                    },
+                    prefill: {
+                        name: currentUser.name,
+                        email: currentUser.email,
+                        contact: currentUser.phone || ''
+                    },
+                    theme: {
+                        color: '#4f46e5'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            showToast('Payment cancelled', 'info');
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (error) {
+                console.error('Error creating order:', error);
+                showToast('Failed to initiate payment: ' + error.message, 'error');
+            }
+        }
+
+        async function handlePaymentSuccess(transactionId, paymentResponse, tier, endDate) {
+            showLoading('Processing payment...');
+
+            try {
+                // Update transaction record
+                await supabaseClient
+                    .from('subscription_transactions')
+                    .update({
+                        payment_status: 'completed',
+                        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                        razorpay_order_id: paymentResponse.razorpay_order_id,
+                        razorpay_signature: paymentResponse.razorpay_signature
+                    })
+                    .eq('id', transactionId);
+
+                // Update user subscription
+                await supabaseClient
+                    .from('users')
+                    .update({
+                        subscription_tier: tier,
+                        subscription_status: 'active',
+                        subscription_start_date: new Date().toISOString(),
+                        subscription_end_date: endDate.toISOString(),
+                        quizzes_created_today: 0,
+                        quizzes_created_this_month: 0
+                    })
+                    .eq('id', currentUser.id);
+
+                // Update local user object
+                currentUser.subscription_tier = tier;
+                currentUser.subscription_status = 'active';
+                currentUser.subscription_end_date = endDate.toISOString();
+
+                hideLoading();
+                showToast('🎉 Payment successful! Your account has been upgraded!', 'success');
+
+                // Refresh the page to show new features
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+
+            } catch (error) {
+                hideLoading();
+                console.error('Error updating subscription:', error);
+                showToast('Payment received but subscription update failed. Please contact support.', 'error');
+            }
+        }
 
         // Toggle parent fields based on role selection
         function toggleParentFields() {
@@ -3013,6 +3650,9 @@
                 if (!authData || !authData.user) throw new Error('Failed to create user account');
 
                 // Insert user into database
+                const now = new Date();
+                const trialEndDate = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+
                 const userRecord = {
                     id: authData.user.id,
                     email,
@@ -3025,7 +3665,16 @@
                     total_time: 0,
                     streak: 0,
                     parent_email: parentEmail || null,
-                    parent_phone: parentPhone || null
+                    parent_phone: parentPhone || null,
+                    // Subscription fields
+                    subscription_tier: 'free',
+                    subscription_status: 'trial',
+                    trial_start_date: now.toISOString(),
+                    trial_end_date: trialEndDate.toISOString(),
+                    quizzes_created_today: 0,
+                    quizzes_created_this_month: 0,
+                    quiz_library_count: 0,
+                    account_status: 'active'
                 };
 
                 const { error: insertError } = await supabaseClient.from('users').insert([userRecord]);
@@ -3950,32 +4599,66 @@
         // Now includes View Solutions button for revision
         async function loadQuizHistory() {
             console.log('📚 Loading quiz history for user:', currentUser.id);
-            
+
             try {
                 const { data: quizzes, error } = await supabaseClient.from('quiz_results')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
-                
+
                 if (error) {
                     console.error('❌ Error loading history:', error);
-                    document.getElementById('historyTableBody').innerHTML = 
+                    document.getElementById('historyTableBody').innerHTML =
                         `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:40px;">Error: ${error.message}</td></tr>`;
                     return;
                 }
-                
+
                 console.log('✅ Loaded', quizzes?.length || 0, 'quiz records');
-                
+
+                // Check if user is expired student - limit to last 3 quizzes
+                let displayQuizzes = quizzes;
+                let isLocked = false;
+
+                if (isSubscriptionExpired() && !isInGracePeriod() && currentUser.role === 'student') {
+                    displayQuizzes = quizzes.slice(0, 3);
+                    isLocked = true;
+                    console.log('🔒 Student account expired - limiting to last 3 quizzes');
+                }
+
                 // Store quizzes globally for viewing solutions
-                window.quizHistoryData = quizzes;
-                
-                if (!quizzes || quizzes.length === 0) {
-                    document.getElementById('historyTableBody').innerHTML = 
+                window.quizHistoryData = displayQuizzes;
+
+                if (!displayQuizzes || displayQuizzes.length === 0) {
+                    document.getElementById('historyTableBody').innerHTML =
                         '<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:40px;">No quiz history yet. Take a quiz to see your progress!</td></tr>';
                     return;
                 }
+
+                // Show lockout banner if applicable
+                const historyPage = document.getElementById('historyPage');
+                const existingBanner = historyPage.querySelector('.lockout-banner');
+                if (existingBanner) existingBanner.remove();
+
+                if (isLocked && quizzes.length > 3) {
+                    const banner = document.createElement('div');
+                    banner.className = 'lockout-banner';
+                    banner.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#ea580c);color:white;padding:15px 20px;border-radius:10px;margin-bottom:20px;text-align:center;';
+                    banner.innerHTML = `
+                        <div style="font-size:16px;font-weight:600;margin-bottom:5px;">🔒 Limited Access</div>
+                        <div style="font-size:14px;opacity:0.9;margin-bottom:10px;">
+                            Your ${currentUser.subscription_tier === 'free' ? 'trial' : 'subscription'} has expired. Showing only your last 3 quizzes (${quizzes.length - 3} hidden).
+                        </div>
+                        <button class="btn" onclick="showPage('pricing', event)" style="background:white;color:#ea580c;padding:8px 20px;font-size:14px;font-weight:600;">
+                            Upgrade to Access All ${quizzes.length} Quizzes
+                        </button>
+                    `;
+                    const cardElement = historyPage.querySelector('.card');
+                    if (cardElement) {
+                        cardElement.parentNode.insertBefore(banner, cardElement);
+                    }
+                }
                 
-                document.getElementById('historyTableBody').innerHTML = quizzes.map((q, index) => {
+                document.getElementById('historyTableBody').innerHTML = displayQuizzes.map((q, index) => {
                     const percent = Math.round(q.score / q.total_questions * 100);
                     const badgeClass = percent >= 70 ? 'success' : percent >= 50 ? 'warning' : 'danger';
                     const diffBadge = q.difficulty === 'hard' ? 'danger' : q.difficulty === 'medium' ? 'warning' : 'success';
@@ -4411,6 +5094,13 @@
         // NAVIGATION
         // ========================================
         function showPage(pageId, event) {
+            // Check feature lockout for expired users
+            const lockedFeatures = ['performance', 'topics', 'leaderboard'];
+            if (lockedFeatures.includes(pageId) && !hasFeatureAccess('analytics')) {
+                showUpgradeModal('feature_locked');
+                return;
+            }
+
             document.querySelectorAll('#studentApp .page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('#studentApp .nav-item').forEach(n => n.classList.remove('active'));
 
@@ -4425,6 +5115,7 @@
             if (pageId === 'topics') loadStudentTopicsAnalysis();
             if (pageId === 'leaderboard') loadLeaderboard('all');
             if (pageId === 'history') loadQuizHistory();
+            if (pageId === 'pricing') loadPricingPageData();
         }
 
         function toggleSidebar() {
@@ -4671,10 +5362,17 @@
 
         async function startQuizFromImages() {
             if (!validateQuizSetup(true)) return;
-            
+
+            // Check quiz creation limits
+            const limitCheck = canCreateQuiz();
+            if (!limitCheck.canCreate) {
+                showUpgradeModal(limitCheck.reason);
+                return;
+            }
+
             const metadata = getQuizMetadata();
             const count = document.getElementById('quizCount').value;
-            
+
             showLoading('Generating quiz from images...');
             
             try {
@@ -4797,6 +5495,13 @@ The "block" field should be one of: ${blocks.join(', ')}`
         async function startQuizFromTopic() {
             if (!validateQuizSetup(false)) return;
 
+            // Check quiz creation limits
+            const limitCheck = canCreateQuiz();
+            if (!limitCheck.canCreate) {
+                showUpgradeModal(limitCheck.reason);
+                return;
+            }
+
             const metadata = getQuizMetadata();
             const count = document.getElementById('quizCount').value;
 
@@ -4914,16 +5619,21 @@ The "block" field should be one of: ${blocks.join(', ')}`
         function startQuizUI() {
             document.getElementById('quizSetupCard').style.display = 'none';
             document.getElementById('activeQuizArea').style.display = 'block';
-            
+
             currentQuestionIndex = 0;
             quizScore = 0;
             quizTimeRemaining = 720;
             quizStartTime = Date.now();
             questionTimes = [];
-            
+
+            // Reset lifeline counters for new quiz
+            lifelinesUsed = 0;
+            const tierConfig = getUserTierConfig();
+            lifelinesAvailable = tierConfig.features.lifelines || 0;
+
             // Clear saved image state since quiz has started
             clearImageState();
-            
+
             startTimer();
             showCurrentQuestion();
         }
@@ -4991,6 +5701,103 @@ The "block" field should be one of: ${blocks.join(', ')}`
             } catch (e) {
                 console.log('KaTeX rendering skipped');
             }
+
+            // Show/hide lifeline button based on user tier and usage
+            updateLifelineButton();
+        }
+
+        // ========================================
+        // LIFELINE FUNCTIONS
+        // ========================================
+
+        function updateLifelineButton() {
+            const container = document.getElementById('lifelineContainer');
+            const btn = document.getElementById('fiftyFiftyBtn');
+            const countSpan = document.getElementById('lifelineCount');
+
+            // Check if user has access to lifelines
+            const tierConfig = getUserTierConfig();
+            const maxLifelines = tierConfig.features.lifelines || 0;
+
+            if (maxLifelines === 0 || currentUser.subscription_tier === 'free') {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            const remaining = maxLifelines - lifelinesUsed;
+            countSpan.textContent = `(${remaining} left)`;
+
+            if (remaining <= 0) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }
+
+        async function useFiftyFifty() {
+            const tierConfig = getUserTierConfig();
+            const maxLifelines = tierConfig.features.lifelines || 0;
+
+            // Check if lifelines are available
+            if (lifelinesUsed >= maxLifelines) {
+                showToast('No lifelines remaining!', 'error');
+                return;
+            }
+
+            // Check if already answered
+            const q = currentQuiz[currentQuestionIndex];
+            if (q.userAnswer !== undefined) {
+                showToast('Already answered this question!', 'error');
+                return;
+            }
+
+            // Check if already used on this question
+            if (q.lifelineUsed) {
+                showToast('Already used lifeline on this question!', 'error');
+                return;
+            }
+
+            // Eliminate 2 wrong answers
+            const correctIdx = q.correct;
+            const wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
+
+            // Randomly keep one wrong answer
+            const keepIdx = wrongIndices[Math.floor(Math.random() * wrongIndices.length)];
+            const eliminateIndices = wrongIndices.filter(i => i !== keepIdx);
+
+            // Hide eliminated options
+            const options = document.querySelectorAll('.option-item');
+            eliminateIndices.forEach(idx => {
+                options[idx].style.opacity = '0.3';
+                options[idx].style.pointerEvents = 'none';
+                options[idx].style.textDecoration = 'line-through';
+            });
+
+            // Mark lifeline as used
+            lifelinesUsed++;
+            q.lifelineUsed = true;
+
+            // Save lifeline usage to database
+            if (currentQuizId) {
+                try {
+                    await supabaseClient.from('lifeline_usage').insert({
+                        user_id: currentUser.id,
+                        quiz_id: currentQuizId,
+                        lifeline_type: 'fifty_fifty',
+                        question_index: currentQuestionIndex
+                    });
+                } catch (e) {
+                    console.error('Error saving lifeline usage:', e);
+                }
+            }
+
+            updateLifelineButton();
+            showToast('⚡ 50/50 used! 2 wrong answers eliminated', 'success');
         }
 
         function selectOption(idx) {
@@ -5103,17 +5910,25 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 } else {
                     console.log('✅ QUIZ SAVED SUCCESSFULLY:', insertedResult);
                     showToast('Quiz saved!', 'success');
-                    
+
+                    // Store quiz ID for lifeline tracking
+                    if (insertedResult && insertedResult[0]) {
+                        currentQuizId = insertedResult[0].id;
+                    }
+
+                    // Increment quiz creation counters
+                    await incrementQuizCounters();
+
                     // Update streak
                     await updateStreak();
-                    
+
                     // Update daily challenges
                     await updateDailyChallengeProgress({
                         score: quizScore,
                         total: currentQuiz.length,
                         time: timeTaken
                     });
-                    
+
                     // Check for new milestones
                     await checkAndAwardMilestones();
                 }
@@ -6096,18 +6911,25 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             console.log('========================================');
             console.log('🚀 generateTutorQuiz STARTED');
             console.log('========================================');
-            
+
+            // Check quiz creation limits
+            const limitCheck = canCreateQuiz();
+            if (!limitCheck.canCreate) {
+                showUpgradeModal(limitCheck.reason);
+                return;
+            }
+
             try {
                 const topicEl = document.getElementById('tutorQuizTopic');
                 const difficultyEl = document.getElementById('tutorQuizDifficulty');
                 const countEl = document.getElementById('tutorQuizCount');
-                
-                console.log('Elements found:', { 
-                    topicEl: !!topicEl, 
-                    difficultyEl: !!difficultyEl, 
-                    countEl: !!countEl 
+
+                console.log('Elements found:', {
+                    topicEl: !!topicEl,
+                    difficultyEl: !!difficultyEl,
+                    countEl: !!countEl
                 });
-                
+
                 const topic = topicEl?.value?.trim() || '';
                 const subject = typeof getTutorSubject === 'function' ? getTutorSubject() : 'General';
                 const difficulty = difficultyEl?.value || 'medium';

@@ -4,15 +4,17 @@ An advanced educational quiz application with Supabase integration, AI-powered q
 
 ## Features
 
-- **Email OTP Verification**: Secure registration with Brevo email verification
-- **Supabase Integration**: Authentication, database, and storage
-- **AI Quiz Generation**: GROQ-powered question generation from textbook images
-- **Dual Roles**: Student and Tutor interfaces
-- **Batch Management**: Tutors can create batches and assign quizzes
-- **Gamification**: Streaks, daily challenges, milestones, and leaderboards
-- **Quiz Sharing**: Share quizzes with unique codes
-- **Analytics**: Detailed performance tracking and insights
-- **Virtual Wallet**: Points and rewards system
+- **💳 Subscription System**: 3-day free trial + 3 paid tiers with Razorpay payments
+- **📧 Email OTP Verification**: Secure registration with Brevo email verification
+- **🔐 Supabase Integration**: Authentication, database, and storage
+- **🤖 AI Quiz Generation**: GROQ-powered question generation from textbook images
+- **👥 Dual Roles**: Student and Tutor interfaces
+- **📚 Batch Management**: Tutors can create batches and assign quizzes
+- **⚡ 50/50 Lifeline**: Eliminate 2 wrong answers (paid plans only)
+- **🎮 Gamification**: Streaks, daily challenges, milestones, and leaderboards
+- **🔗 Quiz Sharing**: Share quizzes with unique codes
+- **📊 Analytics**: Detailed performance tracking and insights (paid plans)
+- **💰 Virtual Wallet**: Points and rewards system
 
 ## Setup Instructions
 
@@ -46,7 +48,32 @@ An advanced educational quiz application with Supabase integration, AI-powered q
 3. Get your API key from Settings → API Keys
 4. Copy your API key (starts with `xkeysib-...`)
 
-### 4. Configure the Application
+### 4. Razorpay Payment Gateway (for Subscriptions)
+
+1. Create an account at [razorpay.com](https://razorpay.com)
+2. Use **Test Mode** for development (no KYC required)
+3. Get your Test Key ID from Dashboard → Settings → API Keys
+4. For production, complete KYC and switch to Live Mode
+
+### 5. Subscription Database Setup
+
+Run the complete database schema:
+
+```bash
+# Open Supabase SQL Editor and run:
+DATABASE_SUBSCRIPTION_SCHEMA.sql
+```
+
+This creates:
+- Subscription columns in users table
+- subscription_transactions table
+- lifeline_usage table
+- subscription_tiers reference table
+- Automated reset functions
+
+📖 **See [SUBSCRIPTION_SETUP_GUIDE.md](SUBSCRIPTION_SETUP_GUIDE.md) for detailed setup instructions**
+
+### 6. Configure the Application
 
 Open the application in your browser and set your API keys in the browser console:
 
@@ -57,13 +84,38 @@ localStorage.setItem('GROQ_API_KEY', 'your-groq-api-key');
 localStorage.setItem('BREVO_API_KEY', 'your-brevo-api-key');
 localStorage.setItem('BREVO_SENDER_EMAIL', 'your-verified-email@example.com');
 localStorage.setItem('BREVO_SENDER_NAME', 'FamLearn Pro');
+localStorage.setItem('RAZORPAY_KEY_ID', 'rzp_test_XXXXXXXXXXXX');
 ```
 
 Then refresh the page.
 
-### 5. Run the Application
+### 7. Run the Application
 
 Simply open `index.html` in your browser or deploy to any static hosting service (Netlify, Vercel, GitHub Pages, etc.)
+
+## Subscription Tiers
+
+### Free Trial (3 Days)
+- 2 quizzes per day, 5 total
+- Store up to 5 quizzes
+- No lifelines, analytics, or leaderboard
+
+### Learner - ₹149/month
+- 3 quizzes per day, 25 per month
+- Store up to 25 quizzes
+- 2 lifelines per quiz (50/50)
+- Full analytics and leaderboard access
+
+### Pro Student - ₹299/month
+- 5 quizzes per day, unlimited per month
+- Store up to 50 quizzes
+- All Learner features + Priority support
+
+### Pro Tutor - ₹1,499/quarter or ₹4,999/year
+- 5 quizzes per day, unlimited per month
+- Batch management and student tracking
+- Quiz assignments and analytics
+- Save 17% on annual plan
 
 ## Database Schema
 
@@ -79,8 +131,9 @@ Refer to the Supabase dashboard to set up the required tables. The application e
 
 - HTML5, CSS3, JavaScript (Vanilla)
 - Supabase (Database, Auth, Storage)
+- Razorpay (Payment Gateway)
 - Brevo (Transactional Email & OTP Verification)
-- GROQ AI API
+- GROQ AI API (Quiz Generation)
 - Chart.js (Analytics)
 - KaTeX (Math equation rendering)
 
