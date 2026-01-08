@@ -389,13 +389,33 @@
                 </div>
             </nav>
             <div class="sidebar-footer">
-                <div class="user-info-sidebar">
-                    <div class="user-avatar" id="userAvatar">S</div>
-                    <div class="user-details">
-                        <div class="name" id="sidebarUserName">Student</div>
-                        <div class="role">Student</div>
+                <div class="user-info-sidebar" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px;">
+                    <!-- User Header -->
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="user-avatar" id="userAvatar">S</div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="name" id="sidebarUserName" style="font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Student</div>
+                            <div id="sidebarTierName" style="font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Free Trial</div>
+                        </div>
+                        <button onclick="logout()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;padding:4px;" title="Logout">⏻</button>
                     </div>
-                    <button onclick="logout()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;">⏻</button>
+
+                    <!-- Subscription Info -->
+                    <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px;font-size:11px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <span style="color:#9ca3af;">⏱️ Time Remaining</span>
+                            <span id="sidebarDaysLeft" style="color:#fbbf24;font-weight:600;">3 days</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="color:#9ca3af;">📝 Quizzes Today</span>
+                            <span id="sidebarQuizCount" style="color:#10b981;font-weight:600;">0/2</span>
+                        </div>
+                    </div>
+
+                    <!-- Upgrade Button (hidden for paid users) -->
+                    <button id="sidebarUpgradeBtn" onclick="showPage('pricing', event)" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;padding:8px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:none;">
+                        ⚡ Upgrade Now
+                    </button>
                 </div>
             </div>
         </aside>
@@ -970,6 +990,219 @@
                         </table>
                         <div style="margin-top:15px;padding:15px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1;">
                             <strong>⭐ Ranking Score Formula:</strong> (Avg Score × 50%) + (Points × 30%) + (Quizzes × 20%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Page -->
+            <div class="page" id="pricingPage">
+                <div class="page-header">
+                    <h1 class="page-title">💎 Upgrade Your Plan</h1>
+                </div>
+
+                <!-- Current Plan Banner -->
+                <div class="card" id="currentPlanBanner" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;margin-bottom:30px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h3 style="color:white;margin-bottom:5px;">Current Plan: <span id="currentTierName">Free Trial</span></h3>
+                            <p style="opacity:0.9;margin:0;" id="currentPlanDetails">3 days remaining • 2/5 quizzes used</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:14px;opacity:0.8;">Daily Limit</div>
+                            <div style="font-size:24px;font-weight:bold;" id="dailyLimitDisplay">2/2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Cards -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:25px;margin-bottom:30px;">
+
+                    <!-- Learner Plan -->
+                    <div class="card" style="border:3px solid var(--primary);position:relative;">
+                        <div style="position:absolute;top:-15px;right:20px;background:var(--secondary);color:white;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:bold;">
+                            POPULAR
+                        </div>
+                        <h3 style="color:var(--primary);margin-bottom:10px;">📚 Learner</h3>
+                        <div style="display:flex;align-items:baseline;margin-bottom:20px;">
+                            <span style="font-size:2.5rem;font-weight:bold;color:var(--dark);">₹149</span>
+                            <span style="color:var(--gray);margin-left:8px;">/month</span>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 3 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 25 quizzes per month</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 25 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 2 lifelines per quiz</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Leaderboard access</div>
+                            <div style="padding:8px 0;">✅ Answer explanations</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="initiatePurchase('learner', 149, 'monthly')" style="width:100%;">
+                            Upgrade Now
+                        </button>
+                    </div>
+
+                    <!-- Pro Student Plan -->
+                    <div class="card" style="border:2px solid #e5e7eb;">
+                        <h3 style="color:var(--success);margin-bottom:10px;">🚀 Pro Student</h3>
+                        <div style="display:flex;align-items:baseline;margin-bottom:20px;">
+                            <span style="font-size:2.5rem;font-weight:bold;color:var(--dark);">₹299</span>
+                            <span style="color:var(--gray);margin-left:8px;">/month</span>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 5 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ <strong>Unlimited</strong> monthly quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 50 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 2 lifelines per quiz</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Leaderboard access</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Answer explanations</div>
+                            <div style="padding:8px 0;">✅ Priority support</div>
+                        </div>
+                        <button class="btn btn-success" onclick="initiatePurchase('pro_student', 299, 'monthly')" style="width:100%;">
+                            Upgrade Now
+                        </button>
+                    </div>
+
+                    <!-- Pro Tutor Plan -->
+                    <div class="card" id="tutorPlanCard" style="border:2px solid #e5e7eb;display:none;">
+                        <h3 style="color:var(--warning);margin-bottom:10px;">👨‍🏫 Pro Tutor</h3>
+                        <div style="margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                <div>
+                                    <div style="font-size:1.8rem;font-weight:bold;color:var(--dark);">₹1,499</div>
+                                    <div style="color:var(--gray);font-size:14px;">/quarter</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:1.8rem;font-weight:bold;color:var(--dark);">₹4,999</div>
+                                    <div style="color:var(--gray);font-size:14px;">/year</div>
+                                    <div style="background:var(--success);color:white;padding:2px 8px;border-radius:4px;font-size:11px;margin-top:4px;">Save 17%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ 5 quizzes per day</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ <strong>Unlimited</strong> monthly quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Store up to 25 quizzes</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Batch management</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Student progress tracking</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Quiz assignments</div>
+                            <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">✅ Full analytics</div>
+                            <div style="padding:8px 0;">✅ Priority support</div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <button class="btn btn-warning" onclick="initiatePurchase('pro_tutor', 1499, 'quarterly')" style="width:100%;">
+                                Quarterly
+                            </button>
+                            <button class="btn btn-warning" onclick="initiatePurchase('pro_tutor', 4999, 'yearly')" style="width:100%;">
+                                Yearly
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Comparison Table -->
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">📊 Feature Comparison</h3>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:var(--light);">
+                                    <th style="padding:12px;text-align:left;">Feature</th>
+                                    <th style="padding:12px;text-align:center;">Free Trial</th>
+                                    <th style="padding:12px;text-align:center;">Learner</th>
+                                    <th style="padding:12px;text-align:center;">Pro Student</th>
+                                    <th style="padding:12px;text-align:center;">Pro Tutor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Daily Quiz Limit</td>
+                                    <td style="padding:12px;text-align:center;">2</td>
+                                    <td style="padding:12px;text-align:center;">3</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Monthly Quiz Limit</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                    <td style="padding:12px;text-align:center;">Unlimited</td>
+                                    <td style="padding:12px;text-align:center;">Unlimited</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Quiz Library</td>
+                                    <td style="padding:12px;text-align:center;">5</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                    <td style="padding:12px;text-align:center;">50</td>
+                                    <td style="padding:12px;text-align:center;">25</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">50/50 Lifelines</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                    <td style="padding:12px;text-align:center;">✅ 2/quiz</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Analytics</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Leaderboard</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Answer Explanations</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #e5e7eb;">
+                                    <td style="padding:12px;">Batch Management</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px;">Priority Support</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">❌</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                    <td style="padding:12px;text-align:center;">✅</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">❓ Frequently Asked Questions</h3>
+                    <div style="space-y:15px;">
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">What happens when my trial ends?</h4>
+                            <p style="color:var(--gray);margin:0;">Your account remains active, but you'll have limited access. Students can access their last 3 quizzes, while tutors will need to upgrade to continue creating quizzes.</p>
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">Can I cancel anytime?</h4>
+                            <p style="color:var(--gray);margin:0;">Yes! You can cancel your subscription anytime. You'll retain access until the end of your billing period.</p>
+                        </div>
+                        <div style="margin-bottom:15px;">
+                            <h4 style="color:var(--primary);margin-bottom:5px;">What payment methods do you accept?</h4>
+                            <p style="color:var(--gray);margin:0;">We accept UPI, Credit/Debit Cards, Net Banking, and Wallets through Razorpay's secure payment gateway.</p>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--primary);margin-bottom:5px;">Do you offer refunds?</h4>
+                            <p style="color:var(--gray);margin:0;">Yes, we offer a 7-day money-back guarantee if you're not satisfied with your subscription.</p>
                         </div>
                     </div>
                 </div>
@@ -2293,6 +2526,64 @@
             return SUBSCRIPTION_TIERS[tier] || SUBSCRIPTION_TIERS.free;
         }
 
+        // Initialize/fix subscription fields for existing users
+        async function ensureSubscriptionFields(user) {
+            if (!user) return user;
+
+            // Check if subscription fields need initialization
+            const needsInit = user.subscription_tier === undefined ||
+                            user.subscription_tier === null ||
+                            user.trial_end_date === undefined ||
+                            user.trial_end_date === null;
+
+            if (needsInit) {
+                console.log('⚠️ User missing subscription fields, initializing...');
+
+                // Set default values
+                const now = new Date();
+                const trialEnd = new Date(user.created_at || now);
+                trialEnd.setDate(trialEnd.getDate() + 3); // 3 day trial
+
+                const updates = {
+                    subscription_tier: 'free',
+                    subscription_status: trialEnd > now ? 'trial' : 'expired',
+                    trial_start_date: user.created_at || now.toISOString(),
+                    trial_end_date: trialEnd.toISOString(),
+                    quizzes_created_today: 0,
+                    quizzes_created_this_month: 0,
+                    quiz_library_count: 0,
+                    last_quiz_creation_date: null,
+                    monthly_reset_date: now.toISOString()
+                };
+
+                console.log('📝 Applying updates:', updates);
+
+                // Update database
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .update(updates)
+                    .eq('id', user.id)
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('❌ Failed to initialize subscription fields:', error);
+                    // Apply to local object even if DB update fails
+                    Object.assign(user, updates);
+                } else {
+                    console.log('✅ Subscription fields initialized');
+                    return data;
+                }
+            }
+
+            // Ensure numeric fields have default values
+            user.quizzes_created_today = user.quizzes_created_today ?? 0;
+            user.quizzes_created_this_month = user.quizzes_created_this_month ?? 0;
+            user.quiz_library_count = user.quiz_library_count ?? 0;
+
+            return user;
+        }
+
         // Check if user can create a quiz (daily + monthly limits)
         function canCreateQuiz() {
             if (!currentUser) return false;
@@ -2356,39 +2647,127 @@
             return Math.max(0, diffDays);
         }
 
-        // Increment quiz creation counters
-        async function incrementQuizCounters() {
+        // Update sidebar user info with subscription details
+        function updateSidebarUserInfo() {
             if (!currentUser) return;
 
-            const today = new Date().toDateString();
-            const lastCreationDate = currentUser.last_quiz_creation_date ? new Date(currentUser.last_quiz_creation_date).toDateString() : null;
+            // Update name and avatar
+            const nameEl = document.getElementById('sidebarUserName');
+            const avatarEl = document.getElementById('userAvatar');
+            const tierNameEl = document.getElementById('sidebarTierName');
+            const daysLeftEl = document.getElementById('sidebarDaysLeft');
+            const quizCountEl = document.getElementById('sidebarQuizCount');
+            const upgradeBtn = document.getElementById('sidebarUpgradeBtn');
 
-            let dailyCount = currentUser.quizzes_created_today || 0;
-            let monthlyCount = currentUser.quizzes_created_this_month || 0;
+            if (nameEl) nameEl.textContent = currentUser.name;
+            if (avatarEl) avatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
 
-            // Reset daily count if it's a new day
-            if (lastCreationDate !== today) {
-                dailyCount = 0;
+            // Get tier config
+            const tierConfig = getUserTierConfig();
+            const tier = currentUser.subscription_tier || 'free';
+
+            // Update tier name with emoji
+            if (tierNameEl) {
+                const tierEmojis = {
+                    'free': '🎫',
+                    'learner': '📚',
+                    'pro_student': '⭐',
+                    'pro_tutor': '👨‍🏫'
+                };
+                tierNameEl.textContent = `${tierEmojis[tier] || '🎫'} ${tierConfig.name}`;
             }
 
-            dailyCount++;
-            monthlyCount++;
+            // Update days remaining
+            if (daysLeftEl) {
+                const daysLeft = getDaysRemaining();
+                if (daysLeft === 0) {
+                    daysLeftEl.textContent = 'Expired';
+                    daysLeftEl.style.color = '#ef4444'; // Red
+                } else if (daysLeft <= 3) {
+                    daysLeftEl.textContent = `${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+                    daysLeftEl.style.color = '#f59e0b'; // Orange warning
+                } else {
+                    daysLeftEl.textContent = `${daysLeft} days`;
+                    daysLeftEl.style.color = '#10b981'; // Green
+                }
+            }
 
-            const { error } = await supabaseClient
-                .from('users')
-                .update({
-                    quizzes_created_today: dailyCount,
-                    quizzes_created_this_month: monthlyCount,
-                    last_quiz_creation_date: new Date().toISOString(),
-                    quiz_library_count: (currentUser.quiz_library_count || 0) + 1
-                })
-                .eq('id', currentUser.id);
+            // Update quiz count
+            if (quizCountEl) {
+                const today = currentUser.quizzes_created_today || 0;
+                const limit = tierConfig.dailyQuizLimit;
+                quizCountEl.textContent = `${today}/${limit}`;
 
-            if (!error) {
-                currentUser.quizzes_created_today = dailyCount;
-                currentUser.quizzes_created_this_month = monthlyCount;
-                currentUser.last_quiz_creation_date = new Date().toISOString();
-                currentUser.quiz_library_count = (currentUser.quiz_library_count || 0) + 1;
+                // Color based on usage
+                if (today >= limit) {
+                    quizCountEl.style.color = '#ef4444'; // Red - limit reached
+                } else if (today >= limit - 1) {
+                    quizCountEl.style.color = '#f59e0b'; // Orange - almost at limit
+                } else {
+                    quizCountEl.style.color = '#10b981'; // Green
+                }
+            }
+
+            // Show upgrade button for free and learner tiers only
+            if (upgradeBtn) {
+                if (tier === 'free' || tier === 'learner') {
+                    upgradeBtn.style.display = 'block';
+                } else {
+                    upgradeBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Increment quiz creation counters
+        async function incrementQuizCounters() {
+            if (!currentUser) {
+                console.warn('⚠️ incrementQuizCounters: No current user');
+                return;
+            }
+
+            try {
+                const today = new Date().toDateString();
+                const lastCreationDate = currentUser.last_quiz_creation_date ? new Date(currentUser.last_quiz_creation_date).toDateString() : null;
+
+                let dailyCount = currentUser.quizzes_created_today || 0;
+                let monthlyCount = currentUser.quizzes_created_this_month || 0;
+
+                // Reset daily count if it's a new day
+                if (lastCreationDate !== today) {
+                    dailyCount = 0;
+                }
+
+                dailyCount++;
+                monthlyCount++;
+
+                console.log('📊 Updating quiz counters:', { dailyCount, monthlyCount });
+
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({
+                        quizzes_created_today: dailyCount,
+                        quizzes_created_this_month: monthlyCount,
+                        last_quiz_creation_date: new Date().toISOString(),
+                        quiz_library_count: (currentUser.quiz_library_count || 0) + 1
+                    })
+                    .eq('id', currentUser.id);
+
+                if (error) {
+                    console.error('❌ Failed to update quiz counters in database:', error);
+                    throw error; // Re-throw to be caught by caller
+                } else {
+                    currentUser.quizzes_created_today = dailyCount;
+                    currentUser.quizzes_created_this_month = monthlyCount;
+                    currentUser.last_quiz_creation_date = new Date().toISOString();
+                    currentUser.quiz_library_count = (currentUser.quiz_library_count || 0) + 1;
+                    console.log('✅ Quiz counters updated successfully');
+
+                    // Update sidebar to reflect new counter values
+                    updateSidebarUserInfo();
+                }
+            } catch (error) {
+                console.error('❌ Exception in incrementQuizCounters:', error);
+                throw error; // Re-throw to be caught by caller
             }
         }
 
@@ -3757,7 +4136,7 @@
                 
                 // Get user profile
                 const { data: profile, error: profileError } = await supabaseClient.from('users').select('*').eq('email', email).single();
-                
+
                 // If profile doesn't exist, create it
                 if (profileError || !profile) {
                     console.log('Profile not found, creating one...');
@@ -3770,16 +4149,16 @@
                         quiz_attempts: 0,
                         role_locked: false
                     }]).select().single();
-                    
+
                     if (insertError) {
                         console.error('Error creating profile:', insertError);
                         throw new Error('Could not create user profile');
                     }
-                    currentUser = newProfile;
+                    currentUser = await ensureSubscriptionFields(newProfile);
                 } else {
-                    currentUser = profile;
+                    currentUser = await ensureSubscriptionFields(profile);
                 }
-                
+
                 initApp();
                 
                 hideLoading();
@@ -3806,7 +4185,7 @@
         // ========================================
         function initApp() {
             document.getElementById('authScreen').style.display = 'none';
-            
+
             if (currentUser.role === 'tutor') {
                 document.getElementById('tutorApp').classList.add('active');
                 document.getElementById('tutorSidebarName').textContent = currentUser.name;
@@ -3814,12 +4193,11 @@
                 initTutorDashboard();
             } else {
                 document.getElementById('studentApp').classList.add('active');
-                document.getElementById('sidebarUserName').textContent = currentUser.name;
-                document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
                 document.getElementById('totalPoints').textContent = currentUser.points || 0;
+                updateSidebarUserInfo(); // Update sidebar with subscription info
                 initStudentDashboard();
             }
-            
+
             setupImageUpload();
         }
 
@@ -5916,21 +6294,37 @@ The "block" field should be one of: ${blocks.join(', ')}`
                         currentQuizId = insertedResult[0].id;
                     }
 
-                    // Increment quiz creation counters
-                    await incrementQuizCounters();
+                    // Increment quiz creation counters (wrapped in try-catch to not break flow)
+                    try {
+                        await incrementQuizCounters();
+                    } catch (counterError) {
+                        console.warn('⚠️ Failed to update quiz counters:', counterError);
+                    }
 
-                    // Update streak
-                    await updateStreak();
+                    // Update streak (wrapped in try-catch)
+                    try {
+                        await updateStreak();
+                    } catch (streakError) {
+                        console.warn('⚠️ Failed to update streak:', streakError);
+                    }
 
-                    // Update daily challenges
-                    await updateDailyChallengeProgress({
-                        score: quizScore,
-                        total: currentQuiz.length,
-                        time: timeTaken
-                    });
+                    // Update daily challenges (wrapped in try-catch)
+                    try {
+                        await updateDailyChallengeProgress({
+                            score: quizScore,
+                            total: currentQuiz.length,
+                            time: timeTaken
+                        });
+                    } catch (challengeError) {
+                        console.warn('⚠️ Failed to update daily challenges:', challengeError);
+                    }
 
-                    // Check for new milestones
-                    await checkAndAwardMilestones();
+                    // Check for new milestones (wrapped in try-catch)
+                    try {
+                        await checkAndAwardMilestones();
+                    } catch (milestoneError) {
+                        console.warn('⚠️ Failed to check milestones:', milestoneError);
+                    }
                 }
                 
                 const newPoints = (currentUser.points || 0) + pointsEarned;
@@ -8629,7 +9023,7 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             if (session) {
                 const { data: profile } = await supabaseClient.from('users').select('*').eq('id', session.user.id).single();
                 if (profile) {
-                    currentUser = profile;
+                    currentUser = await ensureSubscriptionFields(profile);
                     initApp();
                 }
             }
