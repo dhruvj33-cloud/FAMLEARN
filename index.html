@@ -6689,27 +6689,56 @@ The "block" field should be one of: ${blocks.join(', ')}`
             console.log('========================================');
             // ========================================
 
-            document.getElementById('activeQuizArea').style.display = 'none';
-            document.getElementById('quizResultsArea').style.display = 'block';
-            
-            // Pre-select current difficulty and question count for retake
-            const retakeDifficultyEl = document.getElementById('retakeDifficulty');
-            const retakeCountEl = document.getElementById('retakeCount');
+            // Show results area
+            const activeQuizArea = document.getElementById('activeQuizArea');
+            const quizResultsArea = document.getElementById('quizResultsArea');
 
-            if (retakeDifficultyEl && metadata.difficulty) {
-                retakeDifficultyEl.value = metadata.difficulty;
+            if (activeQuizArea) activeQuizArea.style.display = 'none';
+            if (quizResultsArea) {
+                quizResultsArea.style.display = 'block';
+            } else {
+                console.error('❌ quizResultsArea element not found!');
             }
-            if (retakeCountEl) {
-                retakeCountEl.value = currentQuiz.length.toString();
-            }
-            
-            const percent = Math.round(quizScore / currentQuiz.length * 100);
-            document.getElementById('resultScore').textContent = `${quizScore}/${currentQuiz.length}`;
-            document.getElementById('resultPercentage').textContent = `${percent}%`;
-            document.getElementById('resultCorrect').textContent = quizScore;
-            document.getElementById('resultWrong').textContent = currentQuiz.length - quizScore;
-            document.getElementById('resultTime').textContent = formatTime(timeTaken);
-            document.getElementById('resultPoints').textContent = `+${pointsEarned}`;
+
+            // Wait for DOM to update before accessing child elements
+            setTimeout(() => {
+                // Pre-select current difficulty and question count for retake
+                const retakeDifficultyEl = document.getElementById('retakeDifficulty');
+                const retakeCountEl = document.getElementById('retakeCount');
+
+                if (retakeDifficultyEl && metadata.difficulty) {
+                    retakeDifficultyEl.value = metadata.difficulty;
+                }
+                if (retakeCountEl) {
+                    retakeCountEl.value = currentQuiz.length.toString();
+                }
+
+                // Update result display elements (with null checks)
+                const percent = Math.round(quizScore / currentQuiz.length * 100);
+
+                const resultScoreEl = document.getElementById('resultScore');
+                const resultPercentageEl = document.getElementById('resultPercentage');
+                const resultCorrectEl = document.getElementById('resultCorrect');
+                const resultWrongEl = document.getElementById('resultWrong');
+                const resultTimeEl = document.getElementById('resultTime');
+                const resultPointsEl = document.getElementById('resultPoints');
+
+                if (resultScoreEl) resultScoreEl.textContent = `${quizScore}/${currentQuiz.length}`;
+                if (resultPercentageEl) resultPercentageEl.textContent = `${percent}%`;
+                if (resultCorrectEl) resultCorrectEl.textContent = quizScore;
+                if (resultWrongEl) resultWrongEl.textContent = currentQuiz.length - quizScore;
+                if (resultTimeEl) resultTimeEl.textContent = formatTime(timeTaken);
+                if (resultPointsEl) resultPointsEl.textContent = `+${pointsEarned}`;
+
+                console.log('📊 Result elements updated:', {
+                    score: resultScoreEl ? '✅' : '❌ NULL',
+                    percentage: resultPercentageEl ? '✅' : '❌ NULL',
+                    correct: resultCorrectEl ? '✅' : '❌ NULL',
+                    wrong: resultWrongEl ? '✅' : '❌ NULL',
+                    time: resultTimeEl ? '✅' : '❌ NULL',
+                    points: resultPointsEl ? '✅' : '❌ NULL'
+                });
+            }, 10); // Small delay to ensure DOM is updated
             
             // FIX #1: ENHANCED DATABASE SAVING WITH COMPREHENSIVE ERROR LOGGING
             try {
