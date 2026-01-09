@@ -6026,11 +6026,27 @@
                 return;
             }
 
+            // ========================================
+            // CRITICAL: Clear previous quiz state before generating new quiz
+            // ========================================
+            console.log('🧹 CLEARING PREVIOUS QUIZ STATE (startQuizFromImages)');
+            console.log('Previous currentQuiz length:', currentQuiz.length);
+            console.log('Previous metadata:', window.currentQuizMetadata);
+
+            currentQuiz = [];
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            window.currentQuizMetadata = null;
+            window.currentQuizImageRefs = [];
+
+            console.log('✅ State cleared, starting fresh quiz generation');
+            // ========================================
+
             const metadata = getQuizMetadata();
             const count = document.getElementById('quizCount').value;
 
             showLoading('Generating quiz from images...');
-            
+
             try {
                 // Upload images to storage (optional - continues even if fails)
                 let imageRefs = [];
@@ -6040,10 +6056,12 @@
                 } catch (e) {
                     console.log('Image storage skipped:', e);
                 }
-                
+
                 // Store image refs for saving with quiz result
                 window.currentQuizImageRefs = imageRefs;
                 window.currentQuizMetadata = metadata;
+
+                console.log('📝 NEW QUIZ METADATA SET:', metadata);
                 
                 // Build content array for vision model
                 const contentParts = [];
@@ -6116,6 +6134,14 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 try {
                     currentQuiz = JSON.parse(content2);
 
+                    console.log('========================================');
+                    console.log('✅ CURRENTQUIZ UPDATED (IMAGE-BASED)!');
+                    console.log('========================================');
+                    console.log('📊 NEW quiz array length:', currentQuiz.length);
+                    console.log('📊 NEW quiz first question:', currentQuiz[0]?.question);
+                    console.log('📊 NEW quiz topic:', metadata.chapter);
+                    console.log('========================================');
+
                     // Ensure each question has a block
                     currentQuiz.forEach(q => {
                         if (!q.block || !blocks.includes(q.block)) {
@@ -6158,12 +6184,30 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 return;
             }
 
+            // ========================================
+            // CRITICAL: Clear previous quiz state before generating new quiz
+            // ========================================
+            console.log('🧹 CLEARING PREVIOUS QUIZ STATE (startQuizFromTopic)');
+            console.log('Previous currentQuiz length:', currentQuiz.length);
+            console.log('Previous metadata:', window.currentQuizMetadata);
+
+            currentQuiz = [];
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            window.currentQuizMetadata = null;
+            window.currentQuizImageRefs = [];
+
+            console.log('✅ State cleared, starting fresh quiz generation');
+            // ========================================
+
             const metadata = getQuizMetadata();
             const count = document.getElementById('quizCount').value;
 
             // Store metadata for saving
             window.currentQuizMetadata = metadata;
             window.currentQuizImageRefs = [];
+
+            console.log('📝 NEW QUIZ METADATA SET:', metadata);
 
             showLoading(`Generating quiz about "${metadata.chapter}"...`);
 
@@ -6296,9 +6340,14 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 try {
                     console.log('🔄 Attempting to parse JSON...');
                     currentQuiz = JSON.parse(content);
-                    console.log('✅ JSON parsed successfully!');
-                    console.log('📊 Parsed quiz array length:', currentQuiz.length);
-                    console.log('📊 First question:', currentQuiz[0]);
+                    console.log('========================================');
+                    console.log('✅ CURRENTQUIZ UPDATED WITH NEW DATA!');
+                    console.log('========================================');
+                    console.log('📊 NEW quiz array length:', currentQuiz.length);
+                    console.log('📊 NEW quiz first question:', currentQuiz[0].question);
+                    console.log('📊 NEW quiz topic:', metadata.chapter);
+                    console.log('📊 Full new quiz data:', JSON.stringify(currentQuiz).substring(0, 200) + '...');
+                    console.log('========================================');
 
                     // Validate quiz structure
                     if (!Array.isArray(currentQuiz)) {
@@ -6610,14 +6659,21 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 console.log('========================================');
                 console.log('User ID:', currentUser.id);
                 console.log('Score:', quizScore, '/', currentQuiz.length);
-                console.log('Topic:', metadata.topic);
+                console.log('Topic:', metadata.topic || metadata.chapter);
                 console.log('Subject:', metadata.subject);
                 console.log('Difficulty:', metadata.difficulty);
                 console.log('Time taken:', timeTaken, 'seconds');
                 console.log('Points earned:', pointsEarned);
                 console.log('🔑 sharedQuizId:', metadata.sharedQuizId);
                 console.log('📦 Full metadata:', metadata);
-                
+                console.log('---');
+                console.log('📝 QUIZ QUESTIONS BEING SAVED:');
+                console.log('  Total questions:', currentQuiz.length);
+                console.log('  First question:', currentQuiz[0]?.question);
+                console.log('  Last question:', currentQuiz[currentQuiz.length - 1]?.question);
+                console.log('  Questions preview:', JSON.stringify(currentQuiz.map(q => q.question)).substring(0, 200) + '...');
+                console.log('========================================');
+
                 const quizData = {
                     user_id: currentUser.id,
                     score: quizScore,
@@ -6905,8 +6961,17 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
 
         // FIX #5 & #6: Explanations shown ONLY here via Review button, with better format
         function reviewQuiz() {
+            console.log('========================================');
+            console.log('📖 REVIEWING QUIZ - SHOWING EXPLANATIONS');
+            console.log('========================================');
+            console.log('currentQuiz length:', currentQuiz.length);
+            console.log('First question in review:', currentQuiz[0]?.question);
+            console.log('Last question in review:', currentQuiz[currentQuiz.length - 1]?.question);
+            console.log('Metadata:', window.currentQuizMetadata);
+            console.log('========================================');
+
             const container = document.getElementById('quizResultsArea');
-            
+
             const reviewHtml = currentQuiz.map((q, i) => {
                 const userAnswer = q.userAnswer;
                 const isCorrect = userAnswer === q.correct;
