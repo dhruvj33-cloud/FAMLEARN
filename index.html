@@ -6683,7 +6683,7 @@ The "block" field should be one of: ${blocks.join(', ')}`
             console.log('Snapshot metadata full:', metadata);
 
             // Deep copy the quiz with all user answers
-            completedQuizSnapshot = {
+            const snapshotData = {
                 questions: JSON.parse(JSON.stringify(currentQuiz)),
                 metadata: JSON.parse(JSON.stringify(metadata)),
                 score: quizScore,
@@ -6691,7 +6691,14 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 timeTaken: timeTaken
             };
 
+            completedQuizSnapshot = snapshotData;
+
             console.log('✅ Snapshot created and stored separately from currentQuiz');
+            console.log('🔒 SNAPSHOT VERIFICATION IMMEDIATELY AFTER CREATION:');
+            console.log('  Snapshot topic:', completedQuizSnapshot.metadata?.topic || completedQuizSnapshot.metadata?.chapter);
+            console.log('  Snapshot first question:', completedQuizSnapshot.questions[0]?.question?.substring(0, 80));
+            console.log('  Snapshot questions length:', completedQuizSnapshot.questions.length);
+            console.log('  Snapshot object reference:', completedQuizSnapshot);
             console.log('========================================');
             // ========================================
 
@@ -6857,7 +6864,25 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 console.error('❌ Exception saving quiz:', e);
                 showToast('Error saving quiz results', 'error');
             }
-            
+
+            // ========================================
+            // FINAL VERIFICATION: Check snapshot at end of endQuiz()
+            // ========================================
+            console.log('========================================');
+            console.log('🏁 END OF ENDQUIZ() - FINAL SNAPSHOT CHECK');
+            console.log('========================================');
+            console.log('completedQuizSnapshot exists?', !!completedQuizSnapshot);
+            if (completedQuizSnapshot) {
+                console.log('✅ SNAPSHOT STILL INTACT');
+                console.log('  Topic:', completedQuizSnapshot.metadata?.topic || completedQuizSnapshot.metadata?.chapter);
+                console.log('  First question:', completedQuizSnapshot.questions[0]?.question?.substring(0, 80));
+                console.log('  Questions length:', completedQuizSnapshot.questions.length);
+            } else {
+                console.log('❌ SNAPSHOT WAS CLEARED/LOST during endQuiz execution!');
+            }
+            console.log('========================================');
+            // ========================================
+
             // Don't clear metadata yet - needed for share and retake
         }
 
