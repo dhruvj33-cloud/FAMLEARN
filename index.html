@@ -6670,10 +6670,15 @@ The "block" field should be one of: ${blocks.join(', ')}`
             document.getElementById('quizResultsArea').style.display = 'block';
             
             // Pre-select current difficulty and question count for retake
-            if (metadata.difficulty) {
-                document.getElementById('retakeDifficulty').value = metadata.difficulty;
+            const retakeDifficultyEl = document.getElementById('retakeDifficulty');
+            const retakeCountEl = document.getElementById('retakeCount');
+
+            if (retakeDifficultyEl && metadata.difficulty) {
+                retakeDifficultyEl.value = metadata.difficulty;
             }
-            document.getElementById('retakeCount').value = currentQuiz.length.toString();
+            if (retakeCountEl) {
+                retakeCountEl.value = currentQuiz.length.toString();
+            }
             
             const percent = Math.round(quizScore / currentQuiz.length * 100);
             document.getElementById('resultScore').textContent = `${quizScore}/${currentQuiz.length}`;
@@ -7013,8 +7018,15 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
 
             // Use snapshot if available, otherwise fallback to currentQuiz
             const quizToReview = completedQuizSnapshot ? completedQuizSnapshot.questions : currentQuiz;
+            const reviewScore = completedQuizSnapshot ? completedQuizSnapshot.score : quizScore;
+            const reviewTotal = completedQuizSnapshot ? completedQuizSnapshot.total : currentQuiz.length;
 
             console.log('📋 FINAL: Reviewing', quizToReview.length, 'questions');
+            console.log('📋 Score:', reviewScore, '/', reviewTotal);
+            console.log('📋 First 3 questions being displayed:');
+            quizToReview.slice(0, 3).forEach((q, i) => {
+                console.log(`  ${i + 1}. ${q.question.substring(0, 80)}...`);
+            });
             console.log('========================================');
 
             const container = document.getElementById('quizResultsArea');
@@ -7094,17 +7106,19 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     </div>
                 `;
             }).join('');
-            
-            const percent = Math.round(quizScore / currentQuiz.length * 100);
+
+            const percent = Math.round(reviewScore / reviewTotal * 100);
             const scoreColor = percent >= 70 ? '#10b981' : percent >= 50 ? '#f59e0b' : '#ef4444';
-            
+
+            console.log('📊 Building review HTML with score:', reviewScore, '/', reviewTotal, '=', percent + '%');
+
             container.innerHTML = `
                 <div class="quiz-container">
                     <div class="card">
                         <div class="card-header" style="border-bottom:2px solid #e5e7eb;padding-bottom:20px;margin-bottom:20px;">
                             <div class="card-title" style="font-size:1.3rem;">📖 Review Your Answers</div>
                             <div style="text-align:right;">
-                                <div style="font-size:2.5rem;font-weight:700;color:${scoreColor};">${quizScore}/${currentQuiz.length}</div>
+                                <div style="font-size:2.5rem;font-weight:700;color:${scoreColor};">${reviewScore}/${reviewTotal}</div>
                                 <div style="color:#6b7280;">Score: ${percent}%</div>
                             </div>
                         </div>
