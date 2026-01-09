@@ -467,6 +467,11 @@
         </aside>
         
         <main class="main-content">
+            <!-- Testing Mode Banner -->
+            <div id="testingModeBanner" style="display:none;background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);color:#fff;padding:12px 20px;margin:-20px -20px 20px -20px;border-radius:0;font-size:14px;font-weight:600;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                🧪 TESTING MODE ACTIVE - All features unlocked • No payment required • Set TESTING_MODE = false to re-enable subscriptions
+            </div>
+
             <!-- Dashboard Page -->
             <div class="page active" id="dashboardPage">
                 <div class="page-header">
@@ -2414,7 +2419,22 @@
         const MAX_IMAGE_SIZE_MB = 5;
         const IMAGE_COMPRESSION_QUALITY = 0.7;
         const IMAGE_MAX_DIMENSION = 1200;
-        
+
+        // ========================================
+        // 🧪 TESTING MODE CONFIGURATION
+        // ========================================
+        // Set to TRUE to unlock all features for testing without payment
+        // Set to FALSE to re-enable payment/subscription checks for production
+        const TESTING_MODE = true;
+
+        // When TESTING_MODE is true:
+        // ✅ All premium features unlocked (analytics, leaderboard, lifelines, explanations)
+        // ✅ Unlimited quiz creation (no daily/monthly limits)
+        // ✅ No subscription expiry checks
+        // ✅ Upgrade modals disabled
+        // ✅ Payment flows show "Testing Mode" message instead of processing
+        // ⚠️ Set to FALSE before deploying to production!
+
         // ========================================
         // SUBJECT BLOCKS DEFINITION
         // ========================================
@@ -2539,6 +2559,11 @@
         function isSubscriptionExpired() {
             if (!currentUser) return true;
 
+            // 🧪 TESTING MODE: Never expired
+            if (TESTING_MODE) {
+                return false;
+            }
+
             const now = new Date();
 
             // Check trial expiry
@@ -2634,6 +2659,11 @@
         function canCreateQuiz() {
             if (!currentUser) return false;
 
+            // 🧪 TESTING MODE: Bypass all limits
+            if (TESTING_MODE) {
+                return { canCreate: true, testingMode: true };
+            }
+
             const tierConfig = getUserTierConfig();
             const today = new Date().toDateString();
             const lastCreationDate = currentUser.last_quiz_creation_date ? new Date(currentUser.last_quiz_creation_date).toDateString() : null;
@@ -2668,6 +2698,11 @@
         // Check if feature is available for user's tier
         function hasFeatureAccess(featureName) {
             if (!currentUser) return false;
+
+            // 🧪 TESTING MODE: Grant access to all features
+            if (TESTING_MODE) {
+                return true;
+            }
 
             const tierConfig = getUserTierConfig();
             return tierConfig.features[featureName] === true;
@@ -2942,6 +2977,12 @@
 
         // Show upgrade modal
         function showUpgradeModal(reason = 'limit_reached') {
+            // 🧪 TESTING MODE: Don't show upgrade modal
+            if (TESTING_MODE) {
+                console.log('🧪 Testing Mode: Upgrade modal bypassed');
+                return;
+            }
+
             const modal = document.getElementById('upgradeModal');
             if (!modal) return;
 
@@ -3004,6 +3045,14 @@
             console.log('Tier:', tier);
             console.log('Amount:', amount);
             console.log('Period:', period);
+
+            // 🧪 TESTING MODE: Show message instead of processing payment
+            if (TESTING_MODE) {
+                console.log('🧪 Testing Mode: Payment bypassed');
+                showToast('🧪 Testing Mode Active - All features are unlocked for free!', 'info');
+                console.log('💡 To enable payments, set TESTING_MODE = false in the code (line 2423)');
+                return;
+            }
 
             // Check if Razorpay script is loaded
             if (typeof Razorpay === 'undefined') {
@@ -4404,6 +4453,16 @@
         // ========================================
         function initApp() {
             document.getElementById('authScreen').style.display = 'none';
+
+            // 🧪 Show testing mode banner if active
+            if (TESTING_MODE) {
+                const banner = document.getElementById('testingModeBanner');
+                if (banner) {
+                    banner.style.display = 'block';
+                    console.log('🧪 TESTING MODE ACTIVE - All premium features unlocked');
+                    console.log('💡 To disable testing mode, set TESTING_MODE = false (line 2423)');
+                }
+            }
 
             if (currentUser.role === 'tutor') {
                 document.getElementById('tutorApp').classList.add('active');
