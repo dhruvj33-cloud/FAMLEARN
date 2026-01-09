@@ -2536,6 +2536,9 @@
         let questionTimes = [];
         let charts = {};
 
+        // BUG FIX: Snapshot of completed quiz for review (prevents wrong quiz being shown)
+        let completedQuizSnapshot = null;
+
         // Lifeline tracking
         let lifelinesUsed = 0;
         let lifelinesAvailable = 2;
@@ -6032,14 +6035,16 @@
             console.log('🧹 CLEARING PREVIOUS QUIZ STATE (startQuizFromImages)');
             console.log('Previous currentQuiz length:', currentQuiz.length);
             console.log('Previous metadata:', window.currentQuizMetadata);
+            console.log('Previous snapshot exists:', !!completedQuizSnapshot);
 
             currentQuiz = [];
             currentQuestionIndex = 0;
             quizScore = 0;
             window.currentQuizMetadata = null;
             window.currentQuizImageRefs = [];
+            completedQuizSnapshot = null; // Clear old snapshot
 
-            console.log('✅ State cleared, starting fresh quiz generation');
+            console.log('✅ State cleared (including snapshot), starting fresh quiz generation');
             // ========================================
 
             const metadata = getQuizMetadata();
@@ -6190,14 +6195,16 @@ The "block" field should be one of: ${blocks.join(', ')}`
             console.log('🧹 CLEARING PREVIOUS QUIZ STATE (startQuizFromTopic)');
             console.log('Previous currentQuiz length:', currentQuiz.length);
             console.log('Previous metadata:', window.currentQuizMetadata);
+            console.log('Previous snapshot exists:', !!completedQuizSnapshot);
 
             currentQuiz = [];
             currentQuestionIndex = 0;
             quizScore = 0;
             window.currentQuizMetadata = null;
             window.currentQuizImageRefs = [];
+            completedQuizSnapshot = null; // Clear old snapshot
 
-            console.log('✅ State cleared, starting fresh quiz generation');
+            console.log('✅ State cleared (including snapshot), starting fresh quiz generation');
             // ========================================
 
             const metadata = getQuizMetadata();
@@ -6634,7 +6641,31 @@ The "block" field should be one of: ${blocks.join(', ')}`
             currentQuiz.forEach((q, i) => {
                 if (q.userAnswer === undefined) q.userAnswer = -1;
             });
-            
+
+            // ========================================
+            // CRITICAL FIX: Create snapshot of completed quiz for review
+            // This prevents wrong quiz being shown if user generates new quiz before reviewing
+            // ========================================
+            console.log('========================================');
+            console.log('📸 CREATING COMPLETED QUIZ SNAPSHOT');
+            console.log('========================================');
+            console.log('Snapshot quiz length:', currentQuiz.length);
+            console.log('Snapshot first question:', currentQuiz[0]?.question);
+            console.log('Snapshot topic:', metadata.topic || metadata.chapter);
+
+            // Deep copy the quiz with all user answers
+            completedQuizSnapshot = {
+                questions: JSON.parse(JSON.stringify(currentQuiz)),
+                metadata: JSON.parse(JSON.stringify(metadata)),
+                score: quizScore,
+                total: currentQuiz.length,
+                timeTaken: timeTaken
+            };
+
+            console.log('✅ Snapshot created and stored separately from currentQuiz');
+            console.log('========================================');
+            // ========================================
+
             document.getElementById('activeQuizArea').style.display = 'none';
             document.getElementById('quizResultsArea').style.display = 'block';
             
@@ -6937,11 +6968,12 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             document.getElementById('quizSetupCard').style.display = 'block';
             document.getElementById('activeQuizArea').style.display = 'none';
             document.getElementById('quizResultsArea').style.display = 'none';
-            
+
             currentQuiz = [];
             currentQuestionIndex = 0;
             quizScore = 0;
             uploadedImages = [];
+            completedQuizSnapshot = null; // Clear snapshot when resetting
             
             // Reset form fields
             document.getElementById('imagePreviewGrid').innerHTML = '';
@@ -6964,15 +6996,30 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             console.log('========================================');
             console.log('📖 REVIEWING QUIZ - SHOWING EXPLANATIONS');
             console.log('========================================');
-            console.log('currentQuiz length:', currentQuiz.length);
-            console.log('First question in review:', currentQuiz[0]?.question);
-            console.log('Last question in review:', currentQuiz[currentQuiz.length - 1]?.question);
-            console.log('Metadata:', window.currentQuizMetadata);
+
+            // CRITICAL FIX: Use snapshot instead of currentQuiz
+            // This ensures we show the CORRECT quiz even if user generated a new quiz after completing
+            if (!completedQuizSnapshot) {
+                console.error('❌ ERROR: No completed quiz snapshot found!');
+                console.log('Falling back to currentQuiz (may show wrong quiz)');
+                console.log('currentQuiz length:', currentQuiz.length);
+                console.log('First question:', currentQuiz[0]?.question);
+            } else {
+                console.log('✅ Using completedQuizSnapshot (guaranteed correct quiz)');
+                console.log('Snapshot quiz length:', completedQuizSnapshot.questions.length);
+                console.log('Snapshot first question:', completedQuizSnapshot.questions[0]?.question);
+                console.log('Snapshot topic:', completedQuizSnapshot.metadata.topic || completedQuizSnapshot.metadata.chapter);
+            }
+
+            // Use snapshot if available, otherwise fallback to currentQuiz
+            const quizToReview = completedQuizSnapshot ? completedQuizSnapshot.questions : currentQuiz;
+
+            console.log('📋 FINAL: Reviewing', quizToReview.length, 'questions');
             console.log('========================================');
 
             const container = document.getElementById('quizResultsArea');
 
-            const reviewHtml = currentQuiz.map((q, i) => {
+            const reviewHtml = quizToReview.map((q, i) => {
                 const userAnswer = q.userAnswer;
                 const isCorrect = userAnswer === q.correct;
                 const wasSkipped = userAnswer === undefined || userAnswer === -1;
