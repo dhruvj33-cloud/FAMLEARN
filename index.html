@@ -6211,10 +6211,15 @@ The "block" field should be one of: ${blocks.join(', ')}`
             const count = document.getElementById('quizCount').value;
 
             // Store metadata for saving
+            console.log('🔧 SETTING window.currentQuizMetadata FROM TOPIC GENERATION');
+            console.log('  OLD value:', window.currentQuizMetadata);
+            console.log('  NEW value:', metadata);
+
             window.currentQuizMetadata = metadata;
             window.currentQuizImageRefs = [];
 
             console.log('📝 NEW QUIZ METADATA SET:', metadata);
+            console.log('✅ window.currentQuizMetadata now contains:', window.currentQuizMetadata);
 
             showLoading(`Generating quiz about "${metadata.chapter}"...`);
 
@@ -6633,10 +6638,27 @@ The "block" field should be one of: ${blocks.join(', ')}`
             const timeTaken = Math.round((Date.now() - quizStartTime) / 1000);
             const pointsEarned = quizScore * 10;
             
+            // ========================================
+            // CRITICAL: Get metadata - DEBUGGING VERSION
+            // ========================================
+            console.log('========================================');
+            console.log('🔍 ENDQUIZ - CHECKING METADATA SOURCE');
+            console.log('========================================');
+            console.log('window.currentQuizMetadata exists?', !!window.currentQuizMetadata);
+            console.log('window.currentQuizMetadata:', window.currentQuizMetadata);
+
+            const formMetadata = getQuizMetadata();
+            console.log('Form metadata (what getQuizMetadata returns):', formMetadata);
+
             // Get metadata from stored values or form
-            const metadata = window.currentQuizMetadata || getQuizMetadata();
+            const metadata = window.currentQuizMetadata || formMetadata;
+            console.log('---');
+            console.log('FINAL metadata being used:', metadata);
+            console.log('Using:', window.currentQuizMetadata ? 'window.currentQuizMetadata ✅' : 'formMetadata (FALLBACK - WRONG!) ❌');
+            console.log('========================================');
+
             const imageRefs = window.currentQuizImageRefs || [];
-            
+
             // Store user answers in quiz for review
             currentQuiz.forEach((q, i) => {
                 if (q.userAnswer === undefined) q.userAnswer = -1;
@@ -6651,7 +6673,8 @@ The "block" field should be one of: ${blocks.join(', ')}`
             console.log('========================================');
             console.log('Snapshot quiz length:', currentQuiz.length);
             console.log('Snapshot first question:', currentQuiz[0]?.question);
-            console.log('Snapshot topic:', metadata.topic || metadata.chapter);
+            console.log('Snapshot topic from metadata:', metadata.topic || metadata.chapter);
+            console.log('Snapshot metadata full:', metadata);
 
             // Deep copy the quiz with all user answers
             completedQuizSnapshot = {
