@@ -7138,11 +7138,23 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
 
             const container = document.getElementById('quizResultsArea');
 
+            console.log('========================================');
+            console.log('🔨 BUILDING HTML FROM QUESTIONS');
+            console.log('========================================');
+
             const reviewHtml = quizToReview.map((q, i) => {
+                // Log first 3 questions as HTML is being built
+                if (i < 3) {
+                    console.log(`Building HTML for question ${i + 1}:`);
+                    console.log(`  Question text: ${q.question.substring(0, 80)}...`);
+                    console.log(`  Correct option: ${q.options[q.correct]}`);
+                    console.log(`  User answer: ${q.userAnswer}`);
+                }
+
                 const userAnswer = q.userAnswer;
                 const isCorrect = userAnswer === q.correct;
                 const wasSkipped = userAnswer === undefined || userAnswer === -1;
-                
+
                 // Get letter representations
                 const correctLetter = String.fromCharCode(65 + q.correct);
                 const correctText = q.options[q.correct];
@@ -7214,10 +7226,20 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 `;
             }).join('');
 
+            console.log('========================================');
+            console.log('✅ HTML BUILDING COMPLETE');
+            console.log('========================================');
+
             const percent = Math.round(reviewScore / reviewTotal * 100);
             const scoreColor = percent >= 70 ? '#10b981' : percent >= 50 ? '#f59e0b' : '#ef4444';
 
-            console.log('📊 Building review HTML with score:', reviewScore, '/', reviewTotal, '=', percent + '%');
+            console.log('📊 Final review HTML length:', reviewHtml.length, 'characters');
+            console.log('📊 Score for header:', reviewScore, '/', reviewTotal, '=', percent + '%');
+            console.log('---');
+            console.log('🔄 ABOUT TO SET container.innerHTML...');
+            console.log('  Container element:', container);
+            console.log('  Container current innerHTML length:', container.innerHTML.length);
+            console.log('========================================');
 
             container.innerHTML = `
                 <div class="quiz-container">
@@ -7237,6 +7259,24 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     </div>
                 </div>
             `;
+
+            // Verify what was actually written to DOM
+            console.log('========================================');
+            console.log('✅ container.innerHTML WAS SET');
+            console.log('========================================');
+            console.log('  New innerHTML length:', container.innerHTML.length);
+            console.log('---');
+            console.log('🔍 VERIFICATION: Reading back from DOM');
+            const writtenQuestions = container.querySelectorAll('.question-text');
+            console.log('  Number of question elements found in DOM:', writtenQuestions.length);
+            if (writtenQuestions.length > 0) {
+                console.log('  First question in DOM:', writtenQuestions[0].textContent.substring(0, 80) + '...');
+                if (writtenQuestions[1]) console.log('  Second question in DOM:', writtenQuestions[1].textContent.substring(0, 80) + '...');
+                if (writtenQuestions[2]) console.log('  Third question in DOM:', writtenQuestions[2].textContent.substring(0, 80) + '...');
+            } else {
+                console.log('  ❌ NO QUESTION ELEMENTS FOUND IN DOM!');
+            }
+            console.log('========================================');
         }
 
         // ========================================
