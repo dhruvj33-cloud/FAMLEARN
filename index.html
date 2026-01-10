@@ -6517,6 +6517,24 @@ The "block" field should be one of: ${blocks.join(', ')}`
             const btn = document.getElementById('fiftyFiftyBtn');
             const countSpan = document.getElementById('lifelineCount');
 
+            // 🧪 TESTING MODE: Always show lifelines for testing
+            if (TESTING_MODE) {
+                container.style.display = 'block';
+                const remaining = 2 - lifelinesUsed;
+                countSpan.textContent = `(${remaining} left)`;
+
+                if (remaining <= 0) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                }
+                return;
+            }
+
             // Check if user has access to lifelines
             const tierConfig = getUserTierConfig();
             const maxLifelines = tierConfig.features.lifelines || 0;
