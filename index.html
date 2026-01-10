@@ -6702,13 +6702,73 @@ The "block" field should be one of: ${blocks.join(', ')}`
             console.log('========================================');
             // ========================================
 
-            // Show results area
+            // ========================================
+            // CRITICAL FIX: Restore original results HTML structure
+            // reviewQuiz() destroys the static result elements when it sets container.innerHTML
+            // We need to restore them before showing results for the next quiz
+            // ========================================
             const activeQuizArea = document.getElementById('activeQuizArea');
             const quizResultsArea = document.getElementById('quizResultsArea');
 
             if (activeQuizArea) activeQuizArea.style.display = 'none';
+
             if (quizResultsArea) {
+                console.log('========================================');
+                console.log('🔧 RESTORING RESULTS SCREEN STRUCTURE');
+                console.log('========================================');
+                console.log('Current innerHTML length:', quizResultsArea.innerHTML.length);
+                console.log('Checking if result elements exist...');
+
+                // Check if static result elements exist (they won't if reviewQuiz() was called)
+                const resultScoreExists = document.getElementById('resultScore');
+                console.log('  resultScore exists?', !!resultScoreExists);
+
+                if (!resultScoreExists) {
+                    console.log('❌ Result elements missing (destroyed by previous review)');
+                    console.log('🔄 Restoring original results HTML structure...');
+
+                    // Restore the original static results HTML
+                    quizResultsArea.innerHTML = `
+                        <div class="card">
+                            <div class="results-container">
+                                <h2 style="margin-bottom:10px;">🎉 Quiz Complete!</h2>
+                                <div class="results-score" id="resultScore">0/10</div>
+                                <div class="results-label" id="resultPercentage">0%</div>
+
+                                <div class="results-stats">
+                                    <div class="result-stat">
+                                        <div class="value" id="resultCorrect">0</div>
+                                        <div class="label">Correct</div>
+                                    </div>
+                                    <div class="result-stat">
+                                        <div class="value" id="resultWrong">0</div>
+                                        <div class="label">Wrong</div>
+                                    </div>
+                                    <div class="result-stat">
+                                        <div class="value" id="resultTime">0:00</div>
+                                        <div class="label">Time Taken</div>
+                                    </div>
+                                    <div class="result-stat">
+                                        <div class="value" id="resultPoints">+0</div>
+                                        <div class="label">Points Earned</div>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:30px;">
+                                    <button class="btn" onclick="reviewQuiz()" style="flex:1;min-width:140px;">📖 Review Answers</button>
+                                    <button class="btn btn-success" onclick="resetQuiz()" style="flex:1;min-width:140px;">🔄 New Quiz</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    console.log('✅ Results HTML structure restored');
+                } else {
+                    console.log('✅ Result elements already exist (first quiz or reset)');
+                }
+
                 quizResultsArea.style.display = 'block';
+                console.log('========================================');
             } else {
                 console.error('❌ quizResultsArea element not found!');
             }
