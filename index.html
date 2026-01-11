@@ -309,6 +309,21 @@
                     <input type="text" id="regTown" required placeholder="e.g., Andheri West" maxlength="50">
                 </div>
                 <div class="form-group">
+                    <label>Grade / Class</label>
+                    <select id="regGrade" required>
+                        <option value="">Select your grade</option>
+                        <option value="5">Class 5 (Middle School)</option>
+                        <option value="6">Class 6 (Middle School)</option>
+                        <option value="7">Class 7 (Middle School)</option>
+                        <option value="8">Class 8 (Middle School)</option>
+                        <option value="9">Class 9 (Secondary)</option>
+                        <option value="10">Class 10 (Secondary)</option>
+                        <option value="11">Class 11 (Senior Secondary)</option>
+                        <option value="12">Class 12 (Senior Secondary)</option>
+                    </select>
+                    <small style="color:var(--gray);font-size:11px;">This determines your subject options and quiz content</small>
+                </div>
+                <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters">
                 </div>
@@ -2450,20 +2465,207 @@
         // ========================================
         // SUBJECT BLOCKS DEFINITION
         // ========================================
-        const SUBJECT_BLOCKS = {
-            'Mathematics': ['Algebra & Equations', 'Geometry & Mensuration', 'Arithmetic & Numbers', 'Statistics & Probability'],
-            'Physics': ['Mechanics & Motion', 'Electricity & Magnetism', 'Waves & Optics', 'Thermodynamics & Modern Physics'],
-            'Chemistry': ['Physical Chemistry', 'Organic Chemistry', 'Inorganic Chemistry', 'Environmental Chemistry'],
-            'Biology': ['Cell Biology & Genetics', 'Human Physiology', 'Plant Biology & Ecology', 'Evolution & Biotechnology'],
-            'History': ['Ancient History', 'Medieval History', 'Modern History', 'World Wars & Contemporary'],
-            'Geography': ['Physical Geography', 'Human Geography', 'Indian Geography', 'World Geography & Maps'],
-            'English': ['Grammar & Vocabulary', 'Reading Comprehension', 'Writing & Essays', 'Literature & Poetry'],
-            'Computer Science': ['Programming Basics', 'Data Structures & Algorithms', 'Databases & Networking', 'Web & Software Development'],
-            'Economics': ['Microeconomics', 'Macroeconomics', 'Indian Economy', 'International Trade & Finance']
+        // ========================================
+        // GRADE-BASED BLOCK SYSTEM
+        // ========================================
+        // Comprehensive block configuration for all grade levels
+        // Each grade group has subjects with 4 specific blocks
+
+        const GRADE_BLOCKS = {
+            'Grades 5-8': {
+                'Mathematics': [
+                    'Numbers & Operations',
+                    'Basic Algebra',
+                    'Geometry & Mensuration',
+                    'Data Handling & Statistics'
+                ],
+                'Science': [
+                    'Living World',
+                    'Matter & Materials',
+                    'Force, Motion & Energy',
+                    'Earth & Environment'
+                ],
+                'English': [
+                    'Grammar & Usage',
+                    'Reading Comprehension',
+                    'Writing & Composition',
+                    'Vocabulary & Word Power'
+                ],
+                'Social Studies': [
+                    'History & Civilizations',
+                    'Geography & Maps',
+                    'Civics & Government',
+                    'Economics Basics'
+                ],
+                'Hindi': [
+                    'व्याकरण (Grammar)',
+                    'गद्य (Prose)',
+                    'पद्य (Poetry)',
+                    'लेखन (Writing)'
+                ]
+            },
+            'Grades 9-10': {
+                'Mathematics': [
+                    'Number Systems & Algebra',
+                    'Coordinate Geometry',
+                    'Trigonometry & Mensuration',
+                    'Statistics & Probability'
+                ],
+                'Physics': [
+                    'Motion & Laws',
+                    'Work, Energy & Sound',
+                    'Light & Electricity',
+                    'Magnetism & Sources of Energy'
+                ],
+                'Chemistry': [
+                    'Matter & Its Nature',
+                    'Atoms & Molecules',
+                    'Chemical Reactions',
+                    'Carbon & Its Compounds'
+                ],
+                'Biology': [
+                    'Life Processes',
+                    'Control & Coordination',
+                    'Reproduction & Heredity',
+                    'Environment & Ecology'
+                ],
+                'English': [
+                    'Grammar & Syntax',
+                    'Reading & Comprehension',
+                    'Writing Skills',
+                    'Literature & Analysis'
+                ],
+                'Social Science': [
+                    'India & Contemporary World',
+                    'Democratic Politics',
+                    'Economics & Development',
+                    'Geography & Resources'
+                ],
+                'Hindi': [
+                    'व्याकरण (Grammar)',
+                    'गद्य खंड (Prose)',
+                    'काव्य खंड (Poetry)',
+                    'लेखन कौशल (Writing Skills)'
+                ]
+            },
+            'Grades 11-12': {
+                'Physics': [
+                    'Mechanics & Motion',
+                    'Electricity & Magnetism',
+                    'Waves & Optics',
+                    'Modern Physics & Thermodynamics'
+                ],
+                'Chemistry': [
+                    'Physical Chemistry',
+                    'Organic Chemistry',
+                    'Inorganic Chemistry',
+                    'Chemistry in Everyday Life'
+                ],
+                'Mathematics': [
+                    'Algebra & Equations',
+                    'Calculus & Functions',
+                    'Geometry & Vectors',
+                    'Statistics & Probability'
+                ],
+                'Biology': [
+                    'Cell Biology & Genetics',
+                    'Human Physiology',
+                    'Plant Biology & Ecology',
+                    'Evolution & Biotechnology'
+                ],
+                'Economics': [
+                    'Microeconomics',
+                    'Macroeconomics',
+                    'Indian Economy',
+                    'Statistics for Economics'
+                ],
+                'Accountancy': [
+                    'Partnership Accounts',
+                    'Company Accounts',
+                    'Financial Statements',
+                    'Analysis of Financial Statements'
+                ],
+                'Business Studies': [
+                    'Nature & Forms of Business',
+                    'Management Principles',
+                    'Marketing & Finance',
+                    'Business Environment'
+                ],
+                'History': [
+                    'Ancient & Medieval World',
+                    'Modern India',
+                    'World History',
+                    'Themes in Indian History'
+                ],
+                'Political Science': [
+                    'Constitution & Governance',
+                    'Political Theory',
+                    'Politics in India',
+                    'International Relations'
+                ],
+                'English': [
+                    'Reading Comprehension',
+                    'Writing Skills',
+                    'Grammar & Usage',
+                    'Literature & Analysis'
+                ],
+                'Hindi': [
+                    'गद्य (Prose)',
+                    'पद्य (Poetry)',
+                    'व्याकरण (Grammar)',
+                    'लेखन (Writing)'
+                ]
+            }
         };
-        
+
+        // Determine grade group from individual grade
+        function getGradeGroup(grade) {
+            const gradeNum = parseInt(grade);
+            if (gradeNum >= 5 && gradeNum <= 8) return 'Grades 5-8';
+            if (gradeNum >= 9 && gradeNum <= 10) return 'Grades 9-10';
+            if (gradeNum >= 11 && gradeNum <= 12) return 'Grades 11-12';
+            return 'Grades 11-12'; // Default fallback
+        }
+
+        // Get blocks for a student based on their grade and subject
+        function getBlocksForStudent(grade, subject) {
+            console.log(`🎓 getBlocksForStudent: grade=${grade}, subject=${subject}`);
+
+            if (!grade || !subject) {
+                console.log('⚠️ Missing grade or subject, returning default');
+                return ['General'];
+            }
+
+            const gradeGroup = getGradeGroup(grade);
+            console.log(`📚 Grade group: ${gradeGroup}`);
+
+            const gradeBlocks = GRADE_BLOCKS[gradeGroup];
+            if (!gradeBlocks) {
+                console.log('⚠️ No blocks for grade group, returning default');
+                return ['General'];
+            }
+
+            const blocks = gradeBlocks[subject];
+            if (!blocks) {
+                console.log(`⚠️ No blocks for subject "${subject}" in ${gradeGroup}, returning default`);
+                return ['General'];
+            }
+
+            console.log(`✅ Found blocks:`, blocks);
+            return blocks;
+        }
+
+        // Get all subjects for a grade group
+        function getSubjectsForGrade(grade) {
+            const gradeGroup = getGradeGroup(grade);
+            const gradeBlocks = GRADE_BLOCKS[gradeGroup];
+            return gradeBlocks ? Object.keys(gradeBlocks) : [];
+        }
+
+        // Legacy function for backward compatibility
         function getBlocksForSubject(subject) {
-            return SUBJECT_BLOCKS[subject] || ['General'];
+            // Use grade 11-12 blocks as default
+            return getBlocksForStudent(11, subject);
         }
 
         // ========================================
@@ -4070,6 +4272,7 @@
             const school = document.getElementById('regSchool').value.trim();
             const city = document.getElementById('regCity').value.trim();
             const town = document.getElementById('regTown').value.trim();
+            const grade = document.getElementById('regGrade').value;
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
 
@@ -4102,6 +4305,12 @@
                 return;
             }
 
+            if (!grade) {
+                hideLoading();
+                showToast('Please select your grade/class', 'error');
+                return;
+            }
+
             try {
                 // Generate and send OTP
                 const otp = generateOTP();
@@ -4121,7 +4330,8 @@
                     parentPhone,
                     school,
                     city,
-                    town
+                    town,
+                    grade
                 };
 
                 // Switch to OTP verification screen
@@ -4326,7 +4536,7 @@
             clearInterval(otpTimer);
 
             try {
-                const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town } = pendingRegistration;
+                const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town, grade } = pendingRegistration;
 
                 // Create auth user
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
@@ -4356,6 +4566,7 @@
                     school_name: school || null,
                     city: city || null,
                     town: town || null,
+                    grade: grade || null,
                     // Subscription fields
                     subscription_tier: 'free',
                     subscription_status: 'trial',
@@ -4522,13 +4733,50 @@
             setupImageUpload();
         }
 
+        // Populate quiz creation subject dropdown based on student's grade
+        function populateQuizSubjectDropdown() {
+            const subjectSelect = document.getElementById('quizSubject');
+            if (!subjectSelect || !currentUser) return;
+
+            const studentGrade = currentUser.grade || 11;
+            const subjects = getSubjectsForGrade(studentGrade);
+            const gradeGroup = getGradeGroup(studentGrade);
+
+            console.log(`🎓 Populating quiz subjects for Grade ${studentGrade} (${gradeGroup}):`, subjects);
+
+            // Keep current selection if possible
+            const currentValue = subjectSelect.value;
+
+            // Clear existing options except first
+            subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectSelect.appendChild(option);
+            });
+
+            // Add "Other" option at the end
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.textContent = 'Other (Enter manually)';
+            subjectSelect.appendChild(otherOption);
+
+            // Restore previous selection if it's still valid
+            if (subjects.includes(currentValue) || currentValue === 'Other' || currentValue === '') {
+                subjectSelect.value = currentValue;
+            }
+        }
+
         async function initStudentDashboard() {
             await loadStudentStats();
             await loadQuizHistory();
             await loadLeaderboard();
             await loadAssignedQuizzes();
             initCharts();
-            
+            populateQuizSubjectDropdown(); // Populate subjects based on grade
+
             // Check for resumeable quiz first
             setTimeout(() => checkForResumeableQuiz(), 500);
             
@@ -4957,15 +5205,48 @@
         // ========================================
         // ENHANCED ANALYTICS WITH FILTERS
         // ========================================
+        // Populate subject filter based on student's grade
+        function populateSubjectFilter() {
+            const subjectSelect = document.getElementById('perfSubjectFilter');
+            if (!subjectSelect || !currentUser) return;
+
+            const studentGrade = currentUser.grade || 11;
+            const subjects = getSubjectsForGrade(studentGrade);
+            const gradeGroup = getGradeGroup(studentGrade);
+
+            console.log(`🎓 Populating subjects for Grade ${studentGrade} (${gradeGroup}):`, subjects);
+
+            // Keep current selection if possible
+            const currentValue = subjectSelect.value;
+
+            subjectSelect.innerHTML = '<option value="all">All Subjects</option>';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectSelect.appendChild(option);
+            });
+
+            // Restore previous selection if it's still valid
+            if (subjects.includes(currentValue)) {
+                subjectSelect.value = currentValue;
+            }
+        }
+
         function updateBlockFilter() {
             const subject = document.getElementById('perfSubjectFilter')?.value;
             const blockSelect = document.getElementById('perfBlockFilter');
-            if (!blockSelect) return;
-            
+            if (!blockSelect || !currentUser) return;
+
             blockSelect.innerHTML = '<option value="all">All Blocks</option>';
-            
-            if (subject && subject !== 'all' && SUBJECT_BLOCKS[subject]) {
-                SUBJECT_BLOCKS[subject].forEach(block => {
+
+            if (subject && subject !== 'all') {
+                const studentGrade = currentUser.grade || 11;
+                const blocks = getBlocksForStudent(studentGrade, subject);
+
+                console.log(`📚 Updating block filter for ${subject} (Grade ${studentGrade}):`, blocks);
+
+                blocks.forEach(block => {
                     blockSelect.innerHTML += `<option value="${block}">${block}</option>`;
                 });
             }
@@ -5117,7 +5398,11 @@
             } else {
                 console.log('📊 Showing blocks for subject:', subject);
 
-                blocks = SUBJECT_BLOCKS[subject] || ['General'];
+                // Use student's grade to get appropriate blocks
+                const studentGrade = currentUser?.grade || 11;
+                blocks = getBlocksForStudent(studentGrade, subject);
+                console.log(`🎓 Using Grade ${studentGrade} blocks for ${subject}:`, blocks);
+
                 blockStats = {};
 
                 blocks.forEach(block => {
@@ -5962,6 +6247,7 @@
             // Load data for specific pages
             if (pageId === 'dashboard') updateScoreTrendChart();
             if (pageId === 'performance') {
+                populateSubjectFilter(); // Populate subjects based on grade
                 updateBlockFilter();
                 loadEnhancedAnalytics();
             }
@@ -6273,10 +6559,16 @@
                     });
                 }
                 
-                // Get blocks for the subject
-                const blocks = getBlocksForSubject(metadata.subject);
+                // Get blocks for the student's grade and subject
+                const studentGrade = currentUser?.grade || 11; // Default to grade 11 if not set
+                const blocks = getBlocksForStudent(studentGrade, metadata.subject);
+                const gradeGroup = getGradeGroup(studentGrade);
+
+                console.log(`🎓 Generating quiz for Grade ${studentGrade} (${gradeGroup}), Subject: ${metadata.subject}`);
+                console.log(`📚 Available blocks:`, blocks);
+
                 const blocksPrompt = blocks.length > 1
-                    ? `Also classify each question into one of these blocks based on the content: ${blocks.join(', ')}`
+                    ? `IMPORTANT: You MUST assign each question to exactly one of these blocks/topics for Grade ${studentGrade} ${metadata.subject}: ${blocks.join(', ')}. Choose the most appropriate block based on the question content.`
                     : '';
 
                 // FIX #3: Enhanced difficulty for image-based quizzes
@@ -6424,10 +6716,16 @@ The "block" field should be one of: ${blocks.join(', ')}`
             showLoading(`Generating quiz about "${metadata.chapter}"...`);
 
             try {
-                // Get blocks for the subject
-                const blocks = getBlocksForSubject(metadata.subject);
+                // Get blocks for the student's grade and subject
+                const studentGrade = currentUser?.grade || 11; // Default to grade 11 if not set
+                const blocks = getBlocksForStudent(studentGrade, metadata.subject);
+                const gradeGroup = getGradeGroup(studentGrade);
+
+                console.log(`🎓 Generating quiz for Grade ${studentGrade} (${gradeGroup}), Subject: ${metadata.subject}`);
+                console.log(`📚 Available blocks:`, blocks);
+
                 const blocksPrompt = blocks.length > 1
-                    ? `Also classify each question into one of these blocks based on the content: ${blocks.join(', ')}`
+                    ? `IMPORTANT: You MUST assign each question to exactly one of these blocks/topics for Grade ${studentGrade} ${metadata.subject}: ${blocks.join(', ')}. Choose the most appropriate block based on the question content.`
                     : '';
 
                 // FIX #3: DIFFICULTY-SPECIFIC PROMPTS - HARD IS NOW ACTUALLY HARD
