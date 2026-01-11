@@ -776,19 +776,19 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Join Shared Quiz Section - Only on New Quiz Page -->
+                    <div class="card" id="joinQuizCard" style="margin-top:20px;">
+                        <div class="card-title" style="margin-bottom:15px;">🔗 Join a Shared Quiz</div>
+                        <div style="display:flex;gap:10px;">
+                            <input type="text" id="joinQuizCode" placeholder="Enter 6-letter code" maxlength="6"
+                                   style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:10px;font-size:16px;text-transform:uppercase;">
+                            <button class="btn" onclick="joinQuizByCode(document.getElementById('joinQuizCode').value)" style="width:auto;padding:12px 25px;">Join</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Join Shared Quiz Section - Add to Quiz Page -->
-            <div class="card" id="joinQuizCard" style="margin-top:20px;">
-                <div class="card-title" style="margin-bottom:15px;">🔗 Join a Shared Quiz</div>
-                <div style="display:flex;gap:10px;">
-                    <input type="text" id="joinQuizCode" placeholder="Enter 6-letter code" maxlength="6" 
-                           style="flex:1;padding:12px;border:2px solid #e5e7eb;border-radius:10px;font-size:16px;text-transform:uppercase;">
-                    <button class="btn" onclick="joinQuizByCode(document.getElementById('joinQuizCode').value)" style="width:auto;padding:12px 25px;">Join</button>
-                </div>
-            </div>
-            
+
             <!-- Quiz History Page -->
             <div class="page" id="historyPage">
                 <div class="page-header">
@@ -5380,9 +5380,12 @@
             }
             
             // Extract all questions from quiz results for detailed analysis
+            console.log('🔄 Extracting questions from', results.length, 'quiz results...');
             let allQuestions = [];
-            results.forEach(r => {
+            results.forEach((r, rIdx) => {
                 if (r.questions && Array.isArray(r.questions)) {
+                    console.log(`   Quiz ${rIdx + 1}: ${r.questions.length} questions, subject=${r.subject}`);
+
                     r.questions.forEach((q, idx) => {
                         allQuestions.push({
                             ...q,
@@ -5393,9 +5396,23 @@
                             createdAt: r.created_at,
                             timePerQuestion: r.time_taken ? Math.round(r.time_taken / r.total_questions) : 0
                         });
+
+                        // Log first question of first quiz for debugging
+                        if (rIdx === 0 && idx === 0) {
+                            console.log('   📝 Sample question from quiz_results.questions:', q);
+                            console.log('   📝 Block field value:', q.block);
+                        }
                     });
+                } else {
+                    console.warn(`   ⚠️ Quiz ${rIdx + 1}: No questions array found or invalid format`);
+                    console.log('   📝 Quiz result structure:', r);
                 }
             });
+
+            console.log('✅ Extracted', allQuestions.length, 'total questions from quiz results');
+            if (allQuestions.length > 0) {
+                console.log('📝 Sample extracted question:', allQuestions[0]);
+            }
             
             // Apply block filter
             if (blockFilter !== 'all') {
@@ -5440,7 +5457,12 @@
         }
         
         function renderBlockPerformance(questions, subject) {
-            console.log('🧩 renderBlockPerformance: Starting with', questions?.length || 0, 'questions, subject:', subject);
+            console.log('========================================');
+            console.log('🧩 renderBlockPerformance: STARTING');
+            console.log('📊 Questions received:', questions?.length || 0);
+            console.log('📊 Subject filter:', subject);
+            console.log('📊 Sample question:', questions?.[0]);
+            console.log('========================================');
 
             const container = document.getElementById('blockPerformanceContainer');
 
@@ -5453,11 +5475,11 @@
             let blocks, blockStats;
 
             if (!subject || subject === 'all') {
-                console.log('📊 Showing all blocks from actual quiz data');
+                console.log('📊 Mode: Showing ALL blocks from actual quiz data');
 
                 // Aggregate all blocks from questions
                 blockStats = {};
-                questions.forEach(q => {
+                questions.forEach((q, idx) => {
                     const block = q.block || 'General';
                     if (!blockStats[block]) {
                         blockStats[block] = { total: 0, correct: 0, time: 0 };
@@ -5465,12 +5487,22 @@
                     blockStats[block].total++;
                     if (q.userAnswer === q.correct) blockStats[block].correct++;
                     blockStats[block].time += q.timePerQuestion || 0;
+
+                    if (idx < 5) {
+                        console.log(`   Question ${idx + 1}: block="${q.block}", userAnswer="${q.userAnswer}", correct="${q.correct}"`);
+                    }
                 });
 
                 blocks = Object.keys(blockStats).sort();
                 console.log('📦 Found blocks:', blocks);
+                console.log('📊 Block stats:', blockStats);
 
                 if (blocks.length === 0) {
+                    console.error('❌ ERROR: No blocks found after aggregation!');
+                    console.log('🔍 Sample questions to debug:');
+                    questions.slice(0, 3).forEach((q, idx) => {
+                        console.log(`   Q${idx + 1}:`, JSON.stringify(q, null, 2));
+                    });
                     container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>No block data available</p></div>';
                     return;
                 }
@@ -5527,7 +5559,11 @@
 
             container.innerHTML = html || '<div class="empty-state" style="padding:30px;"><p>No block data available</p></div>';
 
+            console.log('========================================');
             console.log('✅ Block performance rendered successfully');
+            console.log('📊 Total blocks rendered:', blocks.filter(b => blockStats[b].total > 0).length);
+            console.log('📊 HTML length:', html.length, 'characters');
+            console.log('========================================');
         }
         
         function renderEnhancedDifficultyBreakdown(results) {
@@ -5581,12 +5617,25 @@
         }
         
         function renderEnhancedTrendChart(results) {
-            console.log('📈 renderEnhancedTrendChart: Starting with', results?.length || 0, 'results');
+            console.log('========================================');
+            console.log('📈 renderEnhancedTrendChart: STARTING');
+            console.log('📊 Results received:', results?.length || 0);
+            console.log('📊 Sample result:', results?.[0]);
+            console.log('========================================');
 
             if (!results || results.length === 0) {
-                console.log('⚠️ No results to render trend chart');
+                console.log('⚠️ No results to render trend chart - showing placeholder');
                 const ctx = document.getElementById('performanceOverTimeChart');
-                if (charts.studentPerformanceTrend) charts.studentPerformanceTrend.destroy();
+                if (!ctx) {
+                    console.error('❌ Canvas element "performanceOverTimeChart" NOT FOUND!');
+                    return;
+                }
+                console.log('✅ Canvas found:', ctx);
+
+                if (charts.studentPerformanceTrend) {
+                    console.log('🗑️ Destroying existing chart');
+                    charts.studentPerformanceTrend.destroy();
+                }
 
                 charts.studentPerformanceTrend = new Chart(ctx, {
                     type: 'line',
@@ -5610,27 +5659,45 @@
                         }
                     }
                 });
+                console.log('✅ Placeholder chart created');
                 return;
             }
 
             // Group by date
+            console.log('🔄 Grouping results by date...');
             const byDate = {};
-            results.forEach(r => {
+            results.forEach((r, idx) => {
                 const date = new Date(r.created_at).toLocaleDateString();
                 if (!byDate[date]) byDate[date] = { total: 0, correct: 0, count: 0 };
                 byDate[date].total += r.total_questions;
                 byDate[date].correct += r.score;
                 byDate[date].count++;
+
+                if (idx < 3) {
+                    console.log(`   Quiz ${idx + 1}: Date=${date}, Score=${r.score}/${r.total_questions}`);
+                }
             });
+
+            console.log('📊 Grouped by date:', byDate);
 
             const dates = Object.keys(byDate).slice(-10); // Last 10 data points
             const accuracies = dates.map(d => Math.round(byDate[d].correct / byDate[d].total * 100));
 
-            console.log('📅 Dates:', dates);
+            console.log('📅 Dates (last 10):', dates);
             console.log('📊 Accuracies:', accuracies);
+            console.log('📊 Number of data points:', dates.length);
 
             const ctx = document.getElementById('performanceOverTimeChart');
-            if (charts.studentPerformanceTrend) charts.studentPerformanceTrend.destroy();
+            if (!ctx) {
+                console.error('❌ Canvas element "performanceOverTimeChart" NOT FOUND!');
+                return;
+            }
+            console.log('✅ Canvas found:', ctx);
+
+            if (charts.studentPerformanceTrend) {
+                console.log('🗑️ Destroying existing chart');
+                charts.studentPerformanceTrend.destroy();
+            }
 
             charts.studentPerformanceTrend = new Chart(ctx, {
                 type: 'line',
@@ -5655,7 +5722,11 @@
                 }
             });
 
+            console.log('========================================');
             console.log('✅ Accuracy Trend chart rendered successfully');
+            console.log('📊 Chart created with', dates.length, 'data points');
+            console.log('📊 Chart object:', charts.studentPerformanceTrend);
+            console.log('========================================');
         }
         
         // ========================================
