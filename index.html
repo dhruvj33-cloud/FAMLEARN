@@ -5058,9 +5058,12 @@
 
             // Chart
             const ctx = document.getElementById('accuracyChart');
-            if (charts.studentAccuracy) charts.studentAccuracy.destroy();
+            // Destroy existing chart instance before creating new one
+            if (window.accuracyChartInstance) {
+                window.accuracyChartInstance.destroy();
+            }
 
-            charts.studentAccuracy = new Chart(ctx, {
+            window.accuracyChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Easy', 'Medium', 'Hard'],
@@ -5122,9 +5125,12 @@
             
             // Chart
             const ctx = document.getElementById('timeChart');
-            if (charts.studentTime) charts.studentTime.destroy();
-            
-            charts.studentTime = new Chart(ctx, {
+            // Destroy existing chart instance before creating new one
+            if (window.timeChartInstance) {
+                window.timeChartInstance.destroy();
+            }
+
+            window.timeChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Easy', 'Medium', 'Hard'],
@@ -5181,9 +5187,12 @@
             const counts = dates.map(d => byDate[d].count);
             
             const ctx = document.getElementById('performanceOverTimeChart');
-            if (charts.studentPerformanceTrend) charts.studentPerformanceTrend.destroy();
-            
-            charts.studentPerformanceTrend = new Chart(ctx, {
+            // Destroy existing chart instance before creating new one
+            if (window.performanceTrendChartInstance) {
+                window.performanceTrendChartInstance.destroy();
+            }
+
+            window.performanceTrendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,
@@ -5632,12 +5641,13 @@
                 }
                 console.log('✅ Canvas found:', ctx);
 
-                if (charts.studentPerformanceTrend) {
+                // Destroy existing chart instance before creating new one
+                if (window.performanceTrendChartInstance) {
                     console.log('🗑️ Destroying existing chart');
-                    charts.studentPerformanceTrend.destroy();
+                    window.performanceTrendChartInstance.destroy();
                 }
 
-                charts.studentPerformanceTrend = new Chart(ctx, {
+                window.performanceTrendChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: ['No data yet'],
@@ -5694,12 +5704,13 @@
             }
             console.log('✅ Canvas found:', ctx);
 
-            if (charts.studentPerformanceTrend) {
+            // Destroy existing chart instance before creating new one
+            if (window.performanceTrendChartInstance) {
                 console.log('🗑️ Destroying existing chart');
-                charts.studentPerformanceTrend.destroy();
+                window.performanceTrendChartInstance.destroy();
             }
 
-            charts.studentPerformanceTrend = new Chart(ctx, {
+            window.performanceTrendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,
@@ -8189,10 +8200,13 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             
             const ctx = document.getElementById('batchPerformanceChart');
             if (!ctx) return;
-            
-            if (charts.batchPerformance) charts.batchPerformance.destroy();
-            
-            charts.batchPerformance = new Chart(ctx, {
+
+            // Destroy existing chart instance before creating new one
+            if (window.batchPerformanceChartInstance) {
+                window.batchPerformanceChartInstance.destroy();
+            }
+
+            window.batchPerformanceChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: batchData.map(b => b.name),
@@ -9340,12 +9354,15 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         function initStudentTrendChart(results) {
             const ctx = document.getElementById('studentTrendChart');
             if (!ctx) return;
-            
-            if (charts.studentTrend) charts.studentTrend.destroy();
-            
+
+            // Destroy existing chart instance before creating new one
+            if (window.studentTrendChartInstance) {
+                window.studentTrendChartInstance.destroy();
+            }
+
             const last10 = results.slice(0, 10).reverse();
-            
-            charts.studentTrend = new Chart(ctx, {
+
+            window.studentTrendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: last10.map((_, i) => `Quiz ${i + 1}`),
@@ -9678,9 +9695,12 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             
             // Chart
             const ctx = document.getElementById('accuracyByDifficultyChart');
-            if (charts.accuracyByDifficulty) charts.accuracyByDifficulty.destroy();
-            
-            charts.accuracyByDifficulty = new Chart(ctx, {
+            // Destroy existing chart instance before creating new one
+            if (window.accuracyByDifficultyChartInstance) {
+                window.accuracyByDifficultyChartInstance.destroy();
+            }
+
+            window.accuracyByDifficultyChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Easy', 'Medium', 'Hard'],
@@ -9735,9 +9755,12 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             
             // Chart
             const ctx = document.getElementById('timeByDifficultyChart');
-            if (charts.timeByDifficulty) charts.timeByDifficulty.destroy();
-            
-            charts.timeByDifficulty = new Chart(ctx, {
+            // Destroy existing chart instance before creating new one
+            if (window.timeByDifficultyChartInstance) {
+                window.timeByDifficultyChartInstance.destroy();
+            }
+
+            window.timeByDifficultyChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Easy', 'Medium', 'Hard'],
@@ -9791,9 +9814,12 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             const counts = dates.map(d => byDate[d].count);
             
             const ctx = document.getElementById('performanceTrendChart');
-            if (charts.performanceTrend) charts.performanceTrend.destroy();
-            
-            charts.performanceTrend = new Chart(ctx, {
+            // Destroy existing chart instance before creating new one
+            if (window.tutorPerformanceTrendChartInstance) {
+                window.tutorPerformanceTrendChartInstance.destroy();
+            }
+
+            window.tutorPerformanceTrendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,
