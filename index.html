@@ -4707,8 +4707,10 @@
         }
         
         function renderStudentAccuracyByDifficulty(results) {
+            console.log('🎯 renderStudentAccuracyByDifficulty: Starting with', results?.length || 0, 'results');
+
             const byDifficulty = { easy: { total: 0, correct: 0, count: 0 }, medium: { total: 0, correct: 0, count: 0 }, hard: { total: 0, correct: 0, count: 0 } };
-            
+
             results.forEach(r => {
                 const diff = r.difficulty || 'medium';
                 if (byDifficulty[diff]) {
@@ -4717,15 +4719,19 @@
                     byDifficulty[diff].count++;
                 }
             });
-            
+
+            console.log('📊 Difficulty breakdown:', byDifficulty);
+
             const easyAcc = byDifficulty.easy.total > 0 ? Math.round(byDifficulty.easy.correct / byDifficulty.easy.total * 100) : 0;
             const mediumAcc = byDifficulty.medium.total > 0 ? Math.round(byDifficulty.medium.correct / byDifficulty.medium.total * 100) : 0;
             const hardAcc = byDifficulty.hard.total > 0 ? Math.round(byDifficulty.hard.correct / byDifficulty.hard.total * 100) : 0;
-            
+
+            console.log('🎯 Calculated accuracies - Easy:', easyAcc + '%, Medium:', mediumAcc + '%, Hard:', hardAcc + '%');
+
             // Chart
             const ctx = document.getElementById('accuracyChart');
             if (charts.studentAccuracy) charts.studentAccuracy.destroy();
-            
+
             charts.studentAccuracy = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -4744,6 +4750,8 @@
                     scales: { y: { beginAtZero: true, max: 100 } }
                 }
             });
+
+            console.log('✅ Accuracy by Difficulty chart rendered successfully');
             
             // Breakdown boxes
             document.getElementById('studentAccuracyBreakdown').innerHTML = `
@@ -5071,36 +5079,70 @@
         }
         
         function renderBlockPerformance(questions, subject) {
+            console.log('🧩 renderBlockPerformance: Starting with', questions?.length || 0, 'questions, subject:', subject);
+
             const container = document.getElementById('blockPerformanceContainer');
-            
-            if (!subject || subject === 'all') {
-                container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>Select a subject to see block-wise breakdown</p></div>';
+
+            if (!questions || questions.length === 0) {
+                console.log('⚠️ No questions to show block performance');
+                container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>Complete quizzes to see block-wise breakdown</p></div>';
                 return;
             }
-            
-            const blocks = SUBJECT_BLOCKS[subject] || ['General'];
-            const blockStats = {};
-            
-            blocks.forEach(block => {
-                blockStats[block] = { total: 0, correct: 0, time: 0 };
-            });
-            
-            questions.forEach(q => {
-                const block = q.block || 'General';
-                if (blockStats[block]) {
+
+            let blocks, blockStats;
+
+            if (!subject || subject === 'all') {
+                console.log('📊 Showing all blocks from actual quiz data');
+
+                // Aggregate all blocks from questions
+                blockStats = {};
+                questions.forEach(q => {
+                    const block = q.block || 'General';
+                    if (!blockStats[block]) {
+                        blockStats[block] = { total: 0, correct: 0, time: 0 };
+                    }
                     blockStats[block].total++;
                     if (q.userAnswer === q.correct) blockStats[block].correct++;
                     blockStats[block].time += q.timePerQuestion || 0;
+                });
+
+                blocks = Object.keys(blockStats).sort();
+                console.log('📦 Found blocks:', blocks);
+
+                if (blocks.length === 0) {
+                    container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>No block data available</p></div>';
+                    return;
                 }
-            });
-            
+
+            } else {
+                console.log('📊 Showing blocks for subject:', subject);
+
+                blocks = SUBJECT_BLOCKS[subject] || ['General'];
+                blockStats = {};
+
+                blocks.forEach(block => {
+                    blockStats[block] = { total: 0, correct: 0, time: 0 };
+                });
+
+                questions.forEach(q => {
+                    const block = q.block || 'General';
+                    if (blockStats[block]) {
+                        blockStats[block].total++;
+                        if (q.userAnswer === q.correct) blockStats[block].correct++;
+                        blockStats[block].time += q.timePerQuestion || 0;
+                    }
+                });
+            }
+
             // Generate HTML
             const html = blocks.map(block => {
                 const stats = blockStats[block];
+                if (stats.total === 0) return ''; // Skip empty blocks
+
                 const accuracy = stats.total > 0 ? Math.round(stats.correct / stats.total * 100) : 0;
                 const avgTime = stats.total > 0 ? Math.round(stats.time / stats.total) : 0;
                 const barColor = accuracy >= 70 ? '#10b981' : accuracy >= 50 ? '#f59e0b' : '#ef4444';
-                
+
                 return `
                     <div style="margin-bottom:15px;padding:15px;background:#f9fafb;border-radius:10px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -5116,18 +5158,22 @@
                         </div>
                     </div>
                 `;
-            }).join('');
-            
-            container.innerHTML = html || '<div class="empty-state" style="padding:30px;"><p>No data available</p></div>';
+            }).filter(html => html !== '').join('');
+
+            container.innerHTML = html || '<div class="empty-state" style="padding:30px;"><p>No block data available</p></div>';
+
+            console.log('✅ Block performance rendered successfully');
         }
         
         function renderEnhancedDifficultyBreakdown(results) {
-            const byDifficulty = { 
-                easy: { total: 0, correct: 0, time: 0, prevAcc: 0 }, 
-                medium: { total: 0, correct: 0, time: 0, prevAcc: 0 }, 
-                hard: { total: 0, correct: 0, time: 0, prevAcc: 0 } 
+            console.log('📊 renderEnhancedDifficultyBreakdown: Starting with', results?.length || 0, 'results');
+
+            const byDifficulty = {
+                easy: { total: 0, correct: 0, time: 0, prevAcc: 0 },
+                medium: { total: 0, correct: 0, time: 0, prevAcc: 0 },
+                hard: { total: 0, correct: 0, time: 0, prevAcc: 0 }
             };
-            
+
             results.forEach(r => {
                 const diff = r.difficulty || 'medium';
                 if (byDifficulty[diff]) {
@@ -5136,14 +5182,18 @@
                     byDifficulty[diff].time += r.time_taken || 0;
                 }
             });
-            
+
+            console.log('📋 Table difficulty breakdown:', byDifficulty);
+
             const rows = ['easy', 'medium', 'hard'].map(diff => {
                 const d = byDifficulty[diff];
                 const accuracy = d.total > 0 ? Math.round(d.correct / d.total * 100) : 0;
                 const avgTimePerQ = d.total > 0 ? Math.round(d.time / d.total) : 0;
                 const badgeClass = diff === 'easy' ? 'success' : diff === 'medium' ? 'warning' : 'danger';
                 const trend = '→'; // TODO: Calculate actual trend from historical data
-                
+
+                console.log(`📋 ${diff}: ${accuracy}% (${d.correct}/${d.total} questions)`);
+
                 return `
                     <tr>
                         <td><span class="badge badge-${badgeClass}">${diff.charAt(0).toUpperCase() + diff.slice(1)}</span></td>
@@ -5155,15 +5205,49 @@
                     </tr>
                 `;
             }).join('');
-            
+
             document.getElementById('difficultyBreakdownTable').innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">No data</td></tr>';
-            
-            // Update charts
+
+            console.log('✅ Difficulty breakdown table rendered');
+
+            // Update charts - IMPORTANT: These use the same `results` data
             renderStudentAccuracyByDifficulty(results);
             renderStudentTimeByDifficulty(results);
         }
         
         function renderEnhancedTrendChart(results) {
+            console.log('📈 renderEnhancedTrendChart: Starting with', results?.length || 0, 'results');
+
+            if (!results || results.length === 0) {
+                console.log('⚠️ No results to render trend chart');
+                const ctx = document.getElementById('performanceOverTimeChart');
+                if (charts.studentPerformanceTrend) charts.studentPerformanceTrend.destroy();
+
+                charts.studentPerformanceTrend = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['No data yet'],
+                        datasets: [{
+                            label: 'Accuracy %',
+                            data: [0],
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100 }
+                        }
+                    }
+                });
+                return;
+            }
+
             // Group by date
             const byDate = {};
             results.forEach(r => {
@@ -5173,13 +5257,16 @@
                 byDate[date].correct += r.score;
                 byDate[date].count++;
             });
-            
+
             const dates = Object.keys(byDate).slice(-10); // Last 10 data points
             const accuracies = dates.map(d => Math.round(byDate[d].correct / byDate[d].total * 100));
-            
+
+            console.log('📅 Dates:', dates);
+            console.log('📊 Accuracies:', accuracies);
+
             const ctx = document.getElementById('performanceOverTimeChart');
             if (charts.studentPerformanceTrend) charts.studentPerformanceTrend.destroy();
-            
+
             charts.studentPerformanceTrend = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -5202,6 +5289,8 @@
                     }
                 }
             });
+
+            console.log('✅ Accuracy Trend chart rendered successfully');
         }
         
         // ========================================
@@ -5791,20 +5880,39 @@
 
         // Update Score Trend Chart with real quiz data
         async function updateScoreTrendChart() {
-            if (!currentUser || !charts.scoreTrend) return;
+            console.log('📊 updateScoreTrendChart: Starting...');
+
+            if (!currentUser) {
+                console.log('❌ No currentUser found');
+                return;
+            }
+
+            if (!charts.scoreTrend) {
+                console.log('❌ scoreTrend chart not initialized');
+                return;
+            }
 
             try {
+                console.log('🔍 Fetching quiz results for user:', currentUser.id);
+
                 // Fetch last 10 quiz results for current user, ordered by date
                 const { data: results, error } = await supabaseClient
                     .from('quiz_results')
                     .select('score, total_questions, created_at, subject, topic')
-                    .eq('student_id', currentUser.id)
+                    .eq('user_id', currentUser.id)  // FIXED: Changed from student_id to user_id
                     .order('created_at', { ascending: true })
                     .limit(10);
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Database error:', error);
+                    throw error;
+                }
+
+                console.log('✅ Found results:', results?.length || 0);
+                console.log('📝 Results data:', results);
 
                 if (!results || results.length === 0) {
+                    console.log('⚠️ No quiz data - showing placeholder');
                     // No data, keep placeholder
                     charts.scoreTrend.data.labels = ['No quiz data yet'];
                     charts.scoreTrend.data.datasets[0].data = [0];
@@ -5819,13 +5927,18 @@
                     return Math.round(percentage);
                 });
 
+                console.log('📊 Chart labels:', labels);
+                console.log('📊 Chart scores:', scores);
+
                 // Update chart data
                 charts.scoreTrend.data.labels = labels;
                 charts.scoreTrend.data.datasets[0].data = scores;
                 charts.scoreTrend.update();
 
+                console.log('✅ Score Trend chart updated successfully');
+
             } catch (err) {
-                console.error('Error updating score trend chart:', err);
+                console.error('❌ Error updating score trend chart:', err);
             }
         }
 
