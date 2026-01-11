@@ -2463,6 +2463,20 @@
         // ⚠️ Set to FALSE before deploying to production!
 
         // ========================================
+        // 🧪 OTP VERIFICATION SKIP (FOR TESTING)
+        // ========================================
+        // Set to TRUE to skip email OTP verification during registration (faster testing)
+        // Set to FALSE to re-enable OTP verification for production
+        const SKIP_OTP_VERIFICATION = true;
+
+        // When SKIP_OTP_VERIFICATION is true:
+        // ✅ Registration completes immediately without email verification
+        // ✅ No OTP email sent (saves API calls to Brevo)
+        // ✅ No waiting for OTP code
+        // ✅ Faster registration for testing multiple users
+        // ⚠️ Set to FALSE before deploying to production to ensure email verification!
+
+        // ========================================
         // SUBJECT BLOCKS DEFINITION
         // ========================================
         // ========================================
@@ -4311,6 +4325,32 @@
                 return;
             }
 
+            // ========================================
+            // 🧪 SKIP OTP FOR TESTING (if enabled)
+            // ========================================
+            if (SKIP_OTP_VERIFICATION) {
+                console.log('🧪 SKIP_OTP_VERIFICATION = true: Registering user directly without OTP');
+                console.log('💡 To enable OTP verification, set SKIP_OTP_VERIFICATION = false (line 2470)');
+
+                try {
+                    // Create account directly without OTP verification
+                    await createUserAccount({
+                        name, email, phone, password, role,
+                        parentEmail, parentPhone, school, city, town, grade
+                    });
+
+                    hideLoading();
+                    showToast('Account created successfully! Welcome to FamLearn!', 'success');
+                } catch (error) {
+                    hideLoading();
+                    showToast(error.message || 'Registration failed. Please try again.', 'error');
+                }
+                return;
+            }
+
+            // ========================================
+            // NORMAL FLOW: OTP VERIFICATION ENABLED
+            // ========================================
             try {
                 // Generate and send OTP
                 const otp = generateOTP();
@@ -4351,6 +4391,72 @@
                 hideLoading();
                 showToast(error.message || 'Failed to send verification code. Please try again.', 'error');
             }
+        }
+
+        // ========================================
+        // USER ACCOUNT CREATION (shared function)
+        // ========================================
+        // Used by both OTP flow and direct registration (when SKIP_OTP_VERIFICATION is true)
+        async function createUserAccount(userData) {
+            const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town, grade } = userData;
+
+            console.log('Creating user account:', { email, name, role, grade });
+
+            // Create auth user
+            const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                email, password, options: { data: { name, role } }
+            });
+
+            if (authError) throw authError;
+            if (!authData || !authData.user) throw new Error('Failed to create user account');
+
+            // Insert user into database
+            const now = new Date();
+            const trialEndDate = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
+
+            const userRecord = {
+                id: authData.user.id,
+                email,
+                name,
+                phone,
+                role,
+                points: 0,
+                quiz_attempts: 0,
+                role_locked: false,
+                total_time: 0,
+                streak: 0,
+                parent_email: parentEmail || null,
+                parent_phone: parentPhone || null,
+                school_name: school || null,
+                city: city || null,
+                town: town || null,
+                grade: grade || null,
+                // Subscription fields
+                subscription_tier: 'free',
+                subscription_status: 'trial',
+                trial_start_date: now.toISOString(),
+                trial_end_date: trialEndDate.toISOString(),
+                quizzes_created_today: 0,
+                quizzes_created_this_month: 0,
+                quiz_library_count: 0,
+                account_status: 'active'
+            };
+
+            const { error: insertError } = await supabaseClient.from('users').insert([userRecord]);
+            if (insertError) throw new Error('Failed to create user profile: ' + insertError.message);
+
+            // Auto-login
+            const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (loginError) throw new Error('Account created but login failed: ' + loginError.message);
+
+            if (loginData.user) {
+                const { data: profile } = await supabaseClient.from('users').select('*').eq('email', email).single();
+                currentUser = profile;
+                initApp();
+            }
+
+            console.log('✅ User account created and logged in successfully');
+            return true;
         }
 
         // ========================================
@@ -4536,60 +4642,8 @@
             clearInterval(otpTimer);
 
             try {
-                const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town, grade } = pendingRegistration;
-
-                // Create auth user
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email, password, options: { data: { name, role } }
-                });
-
-                if (authError) throw authError;
-                if (!authData || !authData.user) throw new Error('Failed to create user account');
-
-                // Insert user into database
-                const now = new Date();
-                const trialEndDate = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days from now
-
-                const userRecord = {
-                    id: authData.user.id,
-                    email,
-                    name,
-                    phone,
-                    role,
-                    points: 0,
-                    quiz_attempts: 0,
-                    role_locked: false,
-                    total_time: 0,
-                    streak: 0,
-                    parent_email: parentEmail || null,
-                    parent_phone: parentPhone || null,
-                    school_name: school || null,
-                    city: city || null,
-                    town: town || null,
-                    grade: grade || null,
-                    // Subscription fields
-                    subscription_tier: 'free',
-                    subscription_status: 'trial',
-                    trial_start_date: now.toISOString(),
-                    trial_end_date: trialEndDate.toISOString(),
-                    quizzes_created_today: 0,
-                    quizzes_created_this_month: 0,
-                    quiz_library_count: 0,
-                    account_status: 'active'
-                };
-
-                const { error: insertError } = await supabaseClient.from('users').insert([userRecord]);
-                if (insertError) throw new Error('Failed to create user profile: ' + insertError.message);
-
-                // Auto-login
-                const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (loginError) throw new Error('Account created but login failed: ' + loginError.message);
-
-                if (loginData.user) {
-                    const { data: profile } = await supabaseClient.from('users').select('*').eq('email', email).single();
-                    currentUser = profile;
-                    initApp();
-                }
+                // Use shared createUserAccount function
+                await createUserAccount(pendingRegistration);
 
                 // Clean up
                 localStorage.removeItem('pending_otp');
