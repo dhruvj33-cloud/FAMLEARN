@@ -6246,6 +6246,10 @@
             // Score Trend Chart
             const ctx1 = document.getElementById('scoreTrendChart')?.getContext('2d');
             if (ctx1) {
+                // Destroy existing chart instance before creating new one
+                if (charts.scoreTrend) {
+                    charts.scoreTrend.destroy();
+                }
                 charts.scoreTrend = new Chart(ctx1, {
                     type: 'line',
                     data: {
@@ -6273,6 +6277,10 @@
             // Accuracy Chart
             const ctx2 = document.getElementById('accuracyChart')?.getContext('2d');
             if (ctx2) {
+                // Destroy existing chart instance before creating new one
+                if (charts.accuracy) {
+                    charts.accuracy.destroy();
+                }
                 charts.accuracy = new Chart(ctx2, {
                     type: 'bar',
                     data: {
@@ -6295,6 +6303,10 @@
             // Time Chart
             const ctx3 = document.getElementById('timeChart')?.getContext('2d');
             if (ctx3) {
+                // Destroy existing chart instance before creating new one
+                if (charts.time) {
+                    charts.time.destroy();
+                }
                 charts.time = new Chart(ctx3, {
                     type: 'bar',
                     data: {
@@ -6722,7 +6734,13 @@
                 console.log(`📚 Available blocks:`, blocks);
 
                 const blocksPrompt = blocks.length > 1
-                    ? `IMPORTANT: You MUST assign each question to exactly one of these blocks/topics for Grade ${studentGrade} ${metadata.subject}: ${blocks.join(', ')}. Choose the most appropriate block based on the question content.`
+                    ? `CRITICAL - BLOCK ASSIGNMENT REQUIRED:
+You MUST assign each question to exactly ONE of these ${blocks.length} blocks/topics for Grade ${studentGrade} ${metadata.subject}:
+${blocks.map((b, i) => `${i + 1}. "${b}"`).join('\n')}
+
+- Distribute questions across ALL blocks (not just one block)
+- Choose the most appropriate block based on the question content
+- Every question MUST have a "block" field set to one of the above blocks`
                     : '';
 
                 // FIX #3: Enhanced difficulty for image-based quizzes
@@ -6743,9 +6761,16 @@ ${blocksPrompt}
 
 Provide detailed explanations for each answer.
 
-Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"explanation":"Detailed explanation","block":"${blocks[0] || 'General'}"}]
+Return ONLY JSON in this exact format:
+[
+  {"question":"Q","options":["A","B","C","D"],"correct":0,"explanation":"Detailed explanation","block":"${blocks[0] || 'General'}"},
+  {"question":"Q2","options":["A","B","C","D"],"correct":1,"explanation":"Explanation","block":"${blocks[1] || blocks[0] || 'General'}"}
+]
 
-The "block" field should be one of: ${blocks.join(', ')}`
+CRITICAL REQUIREMENTS:
+- The "block" field MUST be one of: ${blocks.join(', ')}
+- Each question MUST have a "block" field (not null, not undefined, not empty)
+- Distribute questions across different blocks - DON'T use the same block for all questions`
                 });
 
                 // Try vision model (Llama 4 Scout supports vision)
@@ -6787,24 +6812,75 @@ The "block" field should be one of: ${blocks.join(', ')}`
                     console.log('📊 NEW quiz topic:', metadata.chapter);
                     console.log('========================================');
 
-                    // Ensure each question has a block
-                    currentQuiz.forEach(q => {
-                        if (!q.block || !blocks.includes(q.block)) {
+                    // Ensure each question has a valid block (with logging)
+                    console.log('🔍 Validating block assignments...');
+                    let blockAssignmentIssues = 0;
+                    const blockDistribution = {};
+
+                    currentQuiz.forEach((q, index) => {
+                        const originalBlock = q.block;
+
+                        if (!q.block || typeof q.block !== 'string' || q.block.trim() === '') {
+                            console.warn(`⚠️ Question ${index + 1}: Missing block field! Assigning default.`);
                             q.block = blocks[0] || 'General';
+                            blockAssignmentIssues++;
+                        } else if (!blocks.includes(q.block)) {
+                            console.warn(`⚠️ Question ${index + 1}: Invalid block "${q.block}". Valid blocks:`, blocks);
+                            q.block = blocks[0] || 'General';
+                            blockAssignmentIssues++;
+                        }
+
+                        blockDistribution[q.block] = (blockDistribution[q.block] || 0) + 1;
+
+                        if (originalBlock !== q.block) {
+                            console.log(`   ✏️ Fixed question ${index + 1}: "${originalBlock}" → "${q.block}"`);
                         }
                     });
+
+                    console.log('📊 Block distribution:', blockDistribution);
+                    if (blockAssignmentIssues > 0) {
+                        console.warn(`⚠️ Fixed ${blockAssignmentIssues} block assignment issues`);
+                    } else {
+                        console.log('✅ All questions have valid block assignments');
+                    }
                 } catch (parseError) {
                     console.error('JSON parse error, trying to fix...', parseError);
                     // Try a more aggressive fix
                     const jsonMatch = content2.match(/\[\s*\{[\s\S]*\}\s*\]/);
                     if (jsonMatch) {
                         currentQuiz = JSON.parse(jsonMatch[0]);
-                        // Ensure each question has a block
-                        currentQuiz.forEach(q => {
-                            if (!q.block || !blocks.includes(q.block)) {
+
+                        // Ensure each question has a valid block (with logging)
+                        console.log('🔍 Validating block assignments (fallback parse)...');
+                        let blockAssignmentIssues = 0;
+                        const blockDistribution = {};
+
+                        currentQuiz.forEach((q, index) => {
+                            const originalBlock = q.block;
+
+                            if (!q.block || typeof q.block !== 'string' || q.block.trim() === '') {
+                                console.warn(`⚠️ Question ${index + 1}: Missing block field! Assigning default.`);
                                 q.block = blocks[0] || 'General';
+                                blockAssignmentIssues++;
+                            } else if (!blocks.includes(q.block)) {
+                                console.warn(`⚠️ Question ${index + 1}: Invalid block "${q.block}". Valid blocks:`, blocks);
+                                q.block = blocks[0] || 'General';
+                                blockAssignmentIssues++;
+                            }
+
+                            blockDistribution[q.block] = (blockDistribution[q.block] || 0) + 1;
+
+                            if (originalBlock !== q.block) {
+                                console.log(`   ✏️ Fixed question ${index + 1}: "${originalBlock}" → "${q.block}"`);
                             }
                         });
+
+                        console.log('📊 Block distribution:', blockDistribution);
+                        if (blockAssignmentIssues > 0) {
+                            console.warn(`⚠️ Fixed ${blockAssignmentIssues} block assignment issues`);
+                        } else {
+                            console.log('✅ All questions have valid block assignments');
+                        }
                     } else {
                         throw new Error('Could not parse quiz data from AI response');
                     }
@@ -6879,7 +6955,13 @@ The "block" field should be one of: ${blocks.join(', ')}`
                 console.log(`📚 Available blocks:`, blocks);
 
                 const blocksPrompt = blocks.length > 1
-                    ? `IMPORTANT: You MUST assign each question to exactly one of these blocks/topics for Grade ${studentGrade} ${metadata.subject}: ${blocks.join(', ')}. Choose the most appropriate block based on the question content.`
+                    ? `CRITICAL - BLOCK ASSIGNMENT REQUIRED:
+You MUST assign each question to exactly ONE of these ${blocks.length} blocks/topics for Grade ${studentGrade} ${metadata.subject}:
+${blocks.map((b, i) => `${i + 1}. "${b}"`).join('\n')}
+
+- Distribute questions across ALL blocks (not just one block)
+- Choose the most appropriate block based on the question content
+- Every question MUST have a "block" field set to one of the above blocks`
                     : '';
 
                 // FIX #3: DIFFICULTY-SPECIFIC PROMPTS - HARD IS NOW ACTUALLY HARD
@@ -6952,10 +7034,16 @@ FOR EACH QUESTION provide a detailed explanation that:
 3. Explains why each wrong option is incorrect
 
 Return ONLY a valid JSON array in this exact format:
-[{"question":"Question text here","options":["Option A","Option B","Option C","Option D"],"correct":0,"explanation":"Detailed explanation here","block":"${blocks[0] || 'General'}"}]
+[
+  {"question":"Question text here","options":["Option A","Option B","Option C","Option D"],"correct":0,"explanation":"Detailed explanation here","block":"${blocks[0] || 'General'}"},
+  {"question":"Another question","options":["Option A","Option B","Option C","Option D"],"correct":1,"explanation":"Explanation","block":"${blocks[1] || blocks[0] || 'General'}"}
+]
 
-The "correct" field is the index (0-3) of the correct option.
-The "block" field should be one of: ${blocks.join(', ')}`
+CRITICAL REQUIREMENTS:
+- The "correct" field is the index (0-3) of the correct option
+- The "block" field MUST be one of: ${blocks.join(', ')}
+- Each question MUST have a "block" field (not null, not undefined, not empty)
+- Distribute questions across different blocks - DON'T use the same block for all questions`
                         }],
                         temperature: metadata.difficulty === 'hard' ? 0.8 : 0.7,
                         max_tokens: 4000
@@ -7029,13 +7117,39 @@ The "block" field should be one of: ${blocks.join(', ')}`
                         throw new Error('Invalid question structure - missing required fields');
                     }
 
-                    // Ensure each question has a block
+                    // Ensure each question has a valid block
+                    console.log('🔍 Validating block assignments...');
+                    let blockAssignmentIssues = 0;
+                    const blockDistribution = {};
+
                     currentQuiz.forEach((q, index) => {
-                        if (!q.block || !blocks.includes(q.block)) {
+                        const originalBlock = q.block;
+
+                        if (!q.block || typeof q.block !== 'string' || q.block.trim() === '') {
+                            console.warn(`⚠️ Question ${index + 1}: Missing block field! Assigning default.`);
                             q.block = blocks[0] || 'General';
-                            console.log(`Fixed block for question ${index + 1}:`, q.block);
+                            blockAssignmentIssues++;
+                        } else if (!blocks.includes(q.block)) {
+                            console.warn(`⚠️ Question ${index + 1}: Invalid block "${q.block}". Valid blocks:`, blocks);
+                            console.warn(`   Assigning to closest match or default: ${blocks[0]}`);
+                            q.block = blocks[0] || 'General';
+                            blockAssignmentIssues++;
+                        }
+
+                        // Track block distribution
+                        blockDistribution[q.block] = (blockDistribution[q.block] || 0) + 1;
+
+                        if (originalBlock !== q.block) {
+                            console.log(`   ✏️ Fixed question ${index + 1}: "${originalBlock}" → "${q.block}"`);
                         }
                     });
+
+                    console.log('📊 Block distribution:', blockDistribution);
+                    if (blockAssignmentIssues > 0) {
+                        console.warn(`⚠️ Fixed ${blockAssignmentIssues} block assignment issues`);
+                    } else {
+                        console.log('✅ All questions have valid block assignments');
+                    }
 
                     console.log('✅ Quiz validation passed!');
                     console.log('========================================');
