@@ -297,6 +297,18 @@
                     <input type="tel" id="regPhone" required placeholder="9876543210" pattern="[0-9]{10}" title="Enter 10 digit phone number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
                 <div class="form-group">
+                    <label>School Name</label>
+                    <input type="text" id="regSchool" required placeholder="e.g., St. Mary's High School" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="regCity" required placeholder="e.g., Mumbai" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label>Town/Area</label>
+                    <input type="text" id="regTown" required placeholder="e.g., Andheri West" maxlength="50">
+                </div>
+                <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters">
                 </div>
@@ -753,7 +765,7 @@
             </div>
             
             <!-- Join Shared Quiz Section - Add to Quiz Page -->
-            <div class="card" id="joinQuizCard" style="margin-top:20px;display:none;">
+            <div class="card" id="joinQuizCard" style="margin-top:20px;">
                 <div class="card-title" style="margin-bottom:15px;">🔗 Join a Shared Quiz</div>
                 <div style="display:flex;gap:10px;">
                     <input type="text" id="joinQuizCode" placeholder="Enter 6-letter code" maxlength="6" 
@@ -4055,6 +4067,9 @@
 
             const email = document.getElementById('regEmail').value.trim().toLowerCase();
             const phone = document.getElementById('regPhone').value.trim();
+            const school = document.getElementById('regSchool').value.trim();
+            const city = document.getElementById('regCity').value.trim();
+            const town = document.getElementById('regTown').value.trim();
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
 
@@ -4065,6 +4080,25 @@
             if (!phone || phone.length !== 10) {
                 hideLoading();
                 showToast('Please enter a valid 10-digit phone number', 'error');
+                return;
+            }
+
+            // Validate new fields
+            if (!school || school.length < 2) {
+                hideLoading();
+                showToast('Please enter a valid school name', 'error');
+                return;
+            }
+
+            if (!city || city.length < 2) {
+                hideLoading();
+                showToast('Please enter a valid city name', 'error');
+                return;
+            }
+
+            if (!town || town.length < 2) {
+                hideLoading();
+                showToast('Please enter a valid town/area', 'error');
                 return;
             }
 
@@ -4084,7 +4118,10 @@
                     password,
                     role,
                     parentEmail,
-                    parentPhone
+                    parentPhone,
+                    school,
+                    city,
+                    town
                 };
 
                 // Switch to OTP verification screen
@@ -4289,7 +4326,7 @@
             clearInterval(otpTimer);
 
             try {
-                const { name, email, phone, password, role, parentEmail, parentPhone } = pendingRegistration;
+                const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town } = pendingRegistration;
 
                 // Create auth user
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
@@ -4316,6 +4353,9 @@
                     streak: 0,
                     parent_email: parentEmail || null,
                     parent_phone: parentPhone || null,
+                    school_name: school || null,
+                    city: city || null,
+                    town: town || null,
                     // Subscription fields
                     subscription_tier: 'free',
                     subscription_status: 'trial',
@@ -5749,6 +5789,46 @@
             }
         }
 
+        // Update Score Trend Chart with real quiz data
+        async function updateScoreTrendChart() {
+            if (!currentUser || !charts.scoreTrend) return;
+
+            try {
+                // Fetch last 10 quiz results for current user, ordered by date
+                const { data: results, error } = await supabaseClient
+                    .from('quiz_results')
+                    .select('score, total_questions, created_at, subject, topic')
+                    .eq('student_id', currentUser.id)
+                    .order('created_at', { ascending: true })
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (!results || results.length === 0) {
+                    // No data, keep placeholder
+                    charts.scoreTrend.data.labels = ['No quiz data yet'];
+                    charts.scoreTrend.data.datasets[0].data = [0];
+                    charts.scoreTrend.update();
+                    return;
+                }
+
+                // Calculate percentages and create labels
+                const labels = results.map((r, idx) => `Quiz ${idx + 1}`);
+                const scores = results.map(r => {
+                    const percentage = (r.score / r.total_questions) * 100;
+                    return Math.round(percentage);
+                });
+
+                // Update chart data
+                charts.scoreTrend.data.labels = labels;
+                charts.scoreTrend.data.datasets[0].data = scores;
+                charts.scoreTrend.update();
+
+            } catch (err) {
+                console.error('Error updating score trend chart:', err);
+            }
+        }
+
         // ========================================
         // NAVIGATION
         // ========================================
@@ -5767,6 +5847,7 @@
             if (event && event.target) event.target.classList.add('active');
 
             // Load data for specific pages
+            if (pageId === 'dashboard') updateScoreTrendChart();
             if (pageId === 'performance') {
                 updateBlockFilter();
                 loadEnhancedAnalytics();
@@ -6424,7 +6505,8 @@ The "block" field should be one of: ${blocks.join(', ')}`
 
             currentQuestionIndex = 0;
             quizScore = 0;
-            quizTimeRemaining = 720;
+            // Dynamic timer: 1 minute per question (5Q=5min, 10Q=10min, 15Q=15min)
+            quizTimeRemaining = currentQuiz.length * 60;
             quizStartTime = Date.now();
             questionTimes = [];
 
