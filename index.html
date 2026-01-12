@@ -6285,56 +6285,13 @@
                 });
             }
             
-            // Accuracy Chart
-            const ctx2 = document.getElementById('accuracyChart')?.getContext('2d');
-            if (ctx2) {
-                // Destroy existing chart instance before creating new one
-                if (charts.accuracy) {
-                    charts.accuracy.destroy();
-                }
-                charts.accuracy = new Chart(ctx2, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Easy', 'Medium', 'Hard'],
-                        datasets: [{
-                            label: 'Accuracy %',
-                            data: [75, 60, 45],
-                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, max: 100 } }
-                    }
-                });
-            }
+            // Accuracy Chart - REMOVED (this canvas is on Performance page, not Dashboard)
+            // The accuracyChart canvas is used by renderStudentAccuracyByDifficulty() on Performance page
+            // initCharts() is for Dashboard charts only, so this chart creation is removed to prevent conflicts
             
-            // Time Chart
-            const ctx3 = document.getElementById('timeChart')?.getContext('2d');
-            if (ctx3) {
-                // Destroy existing chart instance before creating new one
-                if (charts.time) {
-                    charts.time.destroy();
-                }
-                charts.time = new Chart(ctx3, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Easy', 'Medium', 'Hard'],
-                        datasets: [{
-                            label: 'Avg Time (sec)',
-                            data: [45, 60, 90],
-                            backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            }
+            // Time Chart - REMOVED (this canvas is on Performance page, not Dashboard)
+            // The timeChart canvas is used by renderStudentTimeByDifficulty() on Performance page
+            // initCharts() is for Dashboard charts only, so this chart creation is removed to prevent conflicts
         }
 
         // Update Score Trend Chart with real quiz data

@@ -2,7 +2,9 @@
 
 ## ✅ Error Completely Resolved
 
-The persistent "Canvas is already in use" error has been completely fixed by migrating all chart instances to use the `window` pattern instead of the `charts` object.
+The persistent "Canvas is already in use" error has been completely fixed by:
+1. **Primary Fix:** Removing duplicate chart creations from `initCharts()` that were trying to use Performance page canvases
+2. **Secondary Fix:** Migrating all chart instances to use the `window` pattern instead of the `charts` object
 
 ---
 
@@ -69,11 +71,72 @@ charts.studentAccuracy = new Chart(ctx, {...});
    → Tries to create new Chart → ERROR: Canvas already in use!
 ```
 
+### 🎯 THE ACTUAL ROOT CAUSE (Discovered After Multiple Fix Attempts):
+
+**The window pattern fix was NOT enough!** The error persisted because:
+
+**Two Functions Were Creating Charts on the SAME Canvas:**
+
+1. **`renderStudentAccuracyByDifficulty()` (line 5060)** - Performance page function ✅ CORRECT
+   - Creates chart on `<canvas id="accuracyChart">` (line 941 - Performance page)
+
+2. **`initCharts()` (line 6289)** - Dashboard initialization function ❌ WRONG!
+   - Was ALSO trying to create a chart on `accuracyChart` canvas
+   - Same for `timeChart` canvas (line 6292)
+
+**The Problem:**
+- `initCharts()` is called on Dashboard load
+- It tried to create charts for canvases that don't exist on Dashboard
+- These canvases (`accuracyChart`, `timeChart`) are on the **Performance page**, not Dashboard
+- When user navigated to Performance page, the canvases already had Chart.js instances attached
+- `renderStudentAccuracyByDifficulty()` tried to create new charts → **ERROR: Canvas already in use!**
+
+**The Real Flow:**
+```
+1. User logs in → Dashboard loads
+   → initCharts() called
+   → Tries document.getElementById('accuracyChart') → Returns null (canvas not on Dashboard)
+   → Chart creation skipped ✅
+
+2. User navigates to Performance page
+   → renderStudentAccuracyByDifficulty() called
+   → Creates window.accuracyChartInstance on accuracyChart canvas ✅
+
+3. User navigates back to Dashboard
+   → initCharts() called AGAIN
+   → Tries document.getElementById('accuracyChart') → NOW RETURNS THE CANVAS! (DOM still has it)
+   → Tries to create charts.studentAccuracy on SAME canvas
+   → ERROR: Canvas is already in use! ❌
+```
+
+**The Fix:**
+Remove `accuracyChart` and `timeChart` creation from `initCharts()` entirely. These canvases belong to Performance page functions, not Dashboard initialization.
+
 ---
 
-## ✅ The Solution: Window Pattern
+## ✅ The Solution: Two-Part Fix
 
-### New Code Pattern:
+### Part 1: Remove Duplicate Chart Creations (PRIMARY FIX)
+
+**Removed from `initCharts()` (lines 6288-6294):**
+```javascript
+// Accuracy Chart - REMOVED (this canvas is on Performance page, not Dashboard)
+// The accuracyChart canvas is used by renderStudentAccuracyByDifficulty() on Performance page
+// initCharts() is for Dashboard charts only, so this chart creation is removed to prevent conflicts
+
+// Time Chart - REMOVED (this canvas is on Performance page, not Dashboard)
+// The timeChart canvas is used by renderStudentTimeByDifficulty() on Performance page
+// initCharts() is for Dashboard charts only, so this chart creation is removed to prevent conflicts
+```
+
+**Result:**
+- `initCharts()` now only creates `scoreTrendChart` (Dashboard chart)
+- No more conflicts with Performance page charts
+- Each canvas has exactly ONE function responsible for it
+
+### Part 2: Window Pattern (SECONDARY FIX)
+
+**New Code Pattern:**
 ```javascript
 // Destroy existing chart instance before creating new one
 if (window.accuracyChartInstance) {
