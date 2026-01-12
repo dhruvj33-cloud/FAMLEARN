@@ -4158,7 +4158,79 @@
                 showToast('Failed to share quiz: ' + e.message, 'error');
             }
         }
-        
+
+        // Share quiz after completion (from results screen)
+        async function shareCompletedQuiz() {
+            console.log('📤 Sharing completed quiz...');
+
+            // Use completedQuizSnapshot if available (most recent quiz data)
+            const quizToShare = completedQuizSnapshot || currentQuiz;
+
+            if (!quizToShare || quizToShare.length === 0) {
+                showToast('No quiz available to share', 'error');
+                return;
+            }
+
+            const metadata = completedQuizSnapshot?.metadata || window.currentQuizMetadata || {};
+            const shareCode = generateShareCode();
+
+            console.log('📝 Quiz to share:', {
+                questionCount: quizToShare.length,
+                hasMetadata: !!metadata,
+                topic: metadata.topic,
+                subject: metadata.subject,
+                difficulty: metadata.difficulty
+            });
+
+            showLoading('Creating shareable quiz...');
+
+            try {
+                // Upload images if not already uploaded
+                if (uploadedImages.length > 0 && uploadedImageUrls.length === 0) {
+                    await uploadAllImagesToSupabase();
+                }
+
+                const sharedQuiz = {
+                    creator_id: currentUser.id,
+                    title: metadata.title || `${metadata.topic || 'General'} Quiz`,
+                    subject: metadata.subject || 'General',
+                    topic: metadata.topic || 'General',
+                    difficulty: metadata.difficulty || 'medium',
+                    questions: completedQuizSnapshot ? completedQuizSnapshot.questions : quizToShare,
+                    image_urls: uploadedImageUrls,
+                    share_code: shareCode,
+                    is_public: true
+                };
+
+                console.log('💾 Saving shared quiz to database:', {
+                    title: sharedQuiz.title,
+                    subject: sharedQuiz.subject,
+                    topic: sharedQuiz.topic,
+                    difficulty: sharedQuiz.difficulty,
+                    questionCount: sharedQuiz.questions.length,
+                    shareCode: shareCode
+                });
+
+                const { data, error } = await supabaseClient.from('shared_quizzes')
+                    .insert([sharedQuiz])
+                    .select();
+
+                if (error) throw error;
+
+                hideLoading();
+
+                console.log('✅ Quiz shared successfully! ID:', data[0].id);
+
+                // Show share modal with code
+                showShareModal(shareCode, data[0].id);
+
+            } catch (e) {
+                hideLoading();
+                console.error('❌ Error sharing quiz:', e);
+                showToast('Failed to share quiz: ' + e.message, 'error');
+            }
+        }
+
         function showShareModal(code, quizId) {
             const modal = document.createElement('div');
             modal.className = 'modal active';
@@ -7401,13 +7473,18 @@ CRITICAL REQUIREMENTS:
 
         function startTimer() {
             const timerEl = document.getElementById('quizTimer');
+
+            // Set initial timer display (fixes bug where 15Q quiz showed 16min)
+            timerEl.textContent = '⏱️ ' + formatTime(quizTimeRemaining);
+            timerEl.className = 'quiz-timer'; // Reset to default class
+
             quizTimer = setInterval(() => {
                 quizTimeRemaining--;
                 timerEl.textContent = '⏱️ ' + formatTime(quizTimeRemaining);
-                
+
                 if (quizTimeRemaining <= 60) timerEl.className = 'quiz-timer danger';
                 else if (quizTimeRemaining <= 180) timerEl.className = 'quiz-timer warning';
-                
+
                 if (quizTimeRemaining <= 0) {
                     clearInterval(quizTimer);
                     endQuiz();
@@ -7733,6 +7810,7 @@ CRITICAL REQUIREMENTS:
 
                                 <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:30px;">
                                     <button class="btn" onclick="reviewQuiz()" style="flex:1;min-width:140px;">📖 Review Answers</button>
+                                    <button class="btn btn-secondary" onclick="shareCompletedQuiz()" style="flex:1;min-width:140px;">📤 Share Quiz</button>
                                     <button class="btn btn-success" onclick="resetQuiz()" style="flex:1;min-width:140px;">🔄 New Quiz</button>
                                 </div>
                             </div>
