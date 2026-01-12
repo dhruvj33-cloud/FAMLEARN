@@ -296,9 +296,27 @@
                     <label>Phone Number</label>
                     <input type="tel" id="regPhone" required placeholder="9876543210" pattern="[0-9]{10}" title="Enter 10 digit phone number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
-                <div class="form-group">
+                <!-- School Name (for Students only) -->
+                <div class="form-group" id="studentSchoolField">
                     <label>School Name</label>
-                    <input type="text" id="regSchool" required placeholder="e.g., St. Mary's High School" maxlength="100">
+                    <input type="text" id="regSchool" placeholder="e.g., St. Mary's High School" maxlength="100">
+                </div>
+
+                <!-- Institute Fields (for Tutors only) -->
+                <div id="tutorInstituteFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Institute Name</label>
+                        <input type="text" id="regInstituteName" placeholder="e.g., ABC Coaching Center" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Institute Type</label>
+                        <select id="regInstituteType">
+                            <option value="">Select institute type</option>
+                            <option value="School">School</option>
+                            <option value="Coaching Institute">Coaching Institute</option>
+                            <option value="Tuition">Tuition</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>City</label>
@@ -3449,10 +3467,32 @@
         function toggleParentFields() {
             const role = document.getElementById('regRole').value;
             const parentFields = document.getElementById('parentFieldsGroup');
+            const studentSchoolField = document.getElementById('studentSchoolField');
+            const tutorInstituteFields = document.getElementById('tutorInstituteFields');
+            const regSchool = document.getElementById('regSchool');
+            const regInstituteName = document.getElementById('regInstituteName');
+            const regInstituteType = document.getElementById('regInstituteType');
+
             if (role === 'student') {
+                // Show parent fields and school name for students
                 parentFields.style.display = 'block';
+                studentSchoolField.style.display = 'block';
+                tutorInstituteFields.style.display = 'none';
+
+                // Make school required for students, institute optional
+                regSchool.required = true;
+                if (regInstituteName) regInstituteName.required = false;
+                if (regInstituteType) regInstituteType.required = false;
             } else {
+                // Show institute fields for tutors, hide parent fields
                 parentFields.style.display = 'none';
+                studentSchoolField.style.display = 'none';
+                tutorInstituteFields.style.display = 'block';
+
+                // Make institute required for tutors, school optional
+                regSchool.required = false;
+                if (regInstituteName) regInstituteName.required = true;
+                if (regInstituteType) regInstituteType.required = true;
             }
         }
 
@@ -4355,12 +4395,16 @@
 
             const email = document.getElementById('regEmail').value.trim().toLowerCase();
             const phone = document.getElementById('regPhone').value.trim();
-            const school = document.getElementById('regSchool').value.trim();
             const city = document.getElementById('regCity').value.trim();
             const town = document.getElementById('regTown').value.trim();
             const grade = document.getElementById('regGrade').value;
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
+
+            // Get role-specific fields
+            const school = role === 'student' ? document.getElementById('regSchool').value.trim() : null;
+            const instituteName = role === 'tutor' ? document.getElementById('regInstituteName')?.value.trim() : null;
+            const instituteType = role === 'tutor' ? document.getElementById('regInstituteType')?.value : null;
 
             const parentEmail = role === 'student' ? document.getElementById('regParentEmail')?.value.trim() : null;
             const parentPhone = role === 'student' ? document.getElementById('regParentPhone')?.value.trim() : null;
@@ -4372,11 +4416,24 @@
                 return;
             }
 
-            // Validate new fields
-            if (!school || school.length < 2) {
-                hideLoading();
-                showToast('Please enter a valid school name', 'error');
-                return;
+            // Validate role-specific fields
+            if (role === 'student') {
+                if (!school || school.length < 2) {
+                    hideLoading();
+                    showToast('Please enter a valid school name', 'error');
+                    return;
+                }
+            } else if (role === 'tutor') {
+                if (!instituteName || instituteName.length < 2) {
+                    hideLoading();
+                    showToast('Please enter a valid institute name', 'error');
+                    return;
+                }
+                if (!instituteType) {
+                    hideLoading();
+                    showToast('Please select an institute type', 'error');
+                    return;
+                }
             }
 
             if (!city || city.length < 2) {
@@ -4408,7 +4465,8 @@
                     // Create account directly without OTP verification
                     await createUserAccount({
                         name, email, phone, password, role,
-                        parentEmail, parentPhone, school, city, town, grade
+                        parentEmail, parentPhone, school, city, town, grade,
+                        instituteName, instituteType
                     });
 
                     hideLoading();
@@ -4443,7 +4501,9 @@
                     school,
                     city,
                     town,
-                    grade
+                    grade,
+                    instituteName,
+                    instituteType
                 };
 
                 // Switch to OTP verification screen
@@ -4470,7 +4530,7 @@
         // ========================================
         // Used by both OTP flow and direct registration (when SKIP_OTP_VERIFICATION is true)
         async function createUserAccount(userData) {
-            const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town, grade } = userData;
+            const { name, email, phone, password, role, parentEmail, parentPhone, school, city, town, grade, instituteName, instituteType } = userData;
 
             console.log('🔵 Creating user account with data:', {
                 email,
@@ -4479,7 +4539,9 @@
                 grade,
                 passwordLength: password?.length,
                 phone,
-                school,
+                school: school || 'N/A (tutor)',
+                instituteName: instituteName || 'N/A (student)',
+                instituteType: instituteType || 'N/A (student)',
                 city,
                 town,
                 hasParentEmail: !!parentEmail,
@@ -4599,6 +4661,9 @@
                 city: city || null,
                 town: town || null,
                 grade: grade || null,
+                // Tutor-specific fields (new)
+                institute_name: instituteName || null,
+                institute_type: instituteType || null,
                 // Subscription fields
                 subscription_tier: 'free',
                 subscription_status: 'trial',
@@ -4617,6 +4682,8 @@
                 role: userRecord.role,
                 grade: userRecord.grade,
                 school_name: userRecord.school_name,
+                institute_name: userRecord.institute_name,
+                institute_type: userRecord.institute_type,
                 city: userRecord.city,
                 town: userRecord.town
             });
