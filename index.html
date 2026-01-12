@@ -4761,6 +4761,40 @@
                 document.getElementById('weakTopics').innerHTML = '';
             }
 
+            // Clear quiz state variables (CRITICAL: Prevents quiz data leakage between users)
+            currentQuiz = [];
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            uploadedImages = [];
+            uploadedImageUrls = [];
+            quizTimeRemaining = 720;
+            quizStartTime = null;
+            questionTimes = [];
+            completedQuizSnapshot = null;
+            lifelinesUsed = 0;
+            lifelinesAvailable = 2;
+            currentQuizId = null;
+
+            // Clear quiz timer if running
+            if (quizTimer) {
+                clearInterval(quizTimer);
+                quizTimer = null;
+            }
+
+            // Clear quiz DOM elements
+            const quizResultsArea = document.getElementById('quizResultsArea');
+            if (quizResultsArea) {
+                quizResultsArea.innerHTML = '';
+                quizResultsArea.style.display = 'none';
+            }
+
+            const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+            if (quizQuestionsArea) {
+                quizQuestionsArea.innerHTML = '';
+            }
+
+            console.log('✅ Quiz state cleared on logout');
+
             supabaseClient.auth.signOut();
             currentUser = null;
             document.getElementById('studentApp').classList.remove('active');
@@ -6407,6 +6441,43 @@
             if (pageId === 'leaderboard') loadLeaderboard('all');
             if (pageId === 'history') loadQuizHistory();
             if (pageId === 'pricing') loadPricingPageData();
+
+            // Clear quiz state when navigating to New Quiz page
+            if (pageId === 'newQuiz') {
+                console.log('🔄 Clearing quiz state for new quiz...');
+                currentQuiz = [];
+                currentQuestionIndex = 0;
+                quizScore = 0;
+                uploadedImages = [];
+                uploadedImageUrls = [];
+                quizTimeRemaining = 720;
+                quizStartTime = null;
+                questionTimes = [];
+                completedQuizSnapshot = null;
+                lifelinesUsed = 0;
+                lifelinesAvailable = 2;
+                currentQuizId = null;
+
+                // Clear quiz timer if running
+                if (quizTimer) {
+                    clearInterval(quizTimer);
+                    quizTimer = null;
+                }
+
+                // Clear quiz DOM elements
+                const quizResultsArea = document.getElementById('quizResultsArea');
+                if (quizResultsArea) {
+                    quizResultsArea.innerHTML = '';
+                    quizResultsArea.style.display = 'none';
+                }
+
+                const quizQuestionsArea = document.getElementById('quizQuestionsArea');
+                if (quizQuestionsArea) {
+                    quizQuestionsArea.innerHTML = '';
+                }
+
+                console.log('✅ Quiz state cleared - ready for new quiz');
+            }
         }
 
         function toggleSidebar() {
