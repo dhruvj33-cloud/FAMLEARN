@@ -5025,13 +5025,21 @@
         }
         
         function showEmptyStudentAnalytics() {
-            document.getElementById('perfQuizzesTaken').textContent = '0';
-            document.getElementById('perfOverallAccuracy').textContent = '0%';
-            document.getElementById('perfAvgTime').textContent = '0m';
-            document.getElementById('perfBestScore').textContent = '0%';
-            document.getElementById('studentAccuracyBreakdown').innerHTML = '<p style="color:var(--gray);text-align:center;">Take quizzes to see data</p>';
-            document.getElementById('studentTimeBreakdown').innerHTML = '<p style="color:var(--gray);text-align:center;">Take quizzes to see data</p>';
-            document.getElementById('difficultyBreakdownTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">Take quizzes to see breakdown</td></tr>';
+            const perfQuizzesTaken = document.getElementById('perfQuizzesTaken');
+            const perfOverallAccuracy = document.getElementById('perfOverallAccuracy');
+            const perfAvgTime = document.getElementById('perfAvgTime');
+            const perfBestScore = document.getElementById('perfBestScore');
+            const studentAccuracyBreakdown = document.getElementById('studentAccuracyBreakdown');
+            const studentTimeBreakdown = document.getElementById('studentTimeBreakdown');
+            const difficultyBreakdownTable = document.getElementById('difficultyBreakdownTable');
+
+            if (perfQuizzesTaken) perfQuizzesTaken.textContent = '0';
+            if (perfOverallAccuracy) perfOverallAccuracy.textContent = '0%';
+            if (perfAvgTime) perfAvgTime.textContent = '0m';
+            if (perfBestScore) perfBestScore.textContent = '0%';
+            if (studentAccuracyBreakdown) studentAccuracyBreakdown.innerHTML = '<p style="color:var(--gray);text-align:center;">Take quizzes to see data</p>';
+            if (studentTimeBreakdown) studentTimeBreakdown.innerHTML = '<p style="color:var(--gray);text-align:center;">Take quizzes to see data</p>';
+            if (difficultyBreakdownTable) difficultyBreakdownTable.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">Take quizzes to see breakdown</td></tr>';
         }
         
         function renderStudentAccuracyByDifficulty(results) {
@@ -5083,27 +5091,32 @@
             });
 
             console.log('✅ Accuracy by Difficulty chart rendered successfully');
-            
-            // Breakdown boxes
-            document.getElementById('studentAccuracyBreakdown').innerHTML = `
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-                    <div style="padding:12px;background:#d1fae5;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#065f46;">${easyAcc}%</div>
-                        <div style="font-size:12px;color:#065f46;">Easy</div>
-                        <div style="font-size:11px;color:#065f46;margin-top:4px;">${byDifficulty.easy.count} quizzes</div>
+
+            // Breakdown boxes - Add null check
+            const breakdownElement = document.getElementById('studentAccuracyBreakdown');
+            if (breakdownElement) {
+                breakdownElement.innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+                        <div style="padding:12px;background:#d1fae5;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#065f46;">${easyAcc}%</div>
+                            <div style="font-size:12px;color:#065f46;">Easy</div>
+                            <div style="font-size:11px;color:#065f46;margin-top:4px;">${byDifficulty.easy.count} quizzes</div>
+                        </div>
+                        <div style="padding:12px;background:#fef3c7;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#92400e;">${mediumAcc}%</div>
+                            <div style="font-size:12px;color:#92400e;">Medium</div>
+                            <div style="font-size:11px;color:#92400e;margin-top:4px;">${byDifficulty.medium.count} quizzes</div>
+                        </div>
+                        <div style="padding:12px;background:#fee2e2;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#991b1b;">${hardAcc}%</div>
+                            <div style="font-size:12px;color:#991b1b;">Hard</div>
+                            <div style="font-size:11px;color:#991b1b;margin-top:4px;">${byDifficulty.hard.count} quizzes</div>
+                        </div>
                     </div>
-                    <div style="padding:12px;background:#fef3c7;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#92400e;">${mediumAcc}%</div>
-                        <div style="font-size:12px;color:#92400e;">Medium</div>
-                        <div style="font-size:11px;color:#92400e;margin-top:4px;">${byDifficulty.medium.count} quizzes</div>
-                    </div>
-                    <div style="padding:12px;background:#fee2e2;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#991b1b;">${hardAcc}%</div>
-                        <div style="font-size:12px;color:#991b1b;">Hard</div>
-                        <div style="font-size:11px;color:#991b1b;margin-top:4px;">${byDifficulty.hard.count} quizzes</div>
-                    </div>
-                </div>
-            `;
+                `;
+            } else {
+                console.log('⚠️ studentAccuracyBreakdown element not found in DOM');
+            }
         }
         
         function renderStudentTimeByDifficulty(results) {
@@ -5148,27 +5161,32 @@
                     scales: { y: { beginAtZero: true } }
                 }
             });
-            
-            // Breakdown boxes
-            document.getElementById('studentTimeBreakdown').innerHTML = `
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-                    <div style="padding:12px;background:#dbeafe;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#1e40af;">${easyTime}s</div>
-                        <div style="font-size:12px;color:#1e40af;">Per Question</div>
-                        <div style="font-size:11px;color:#1e40af;margin-top:4px;">Easy</div>
+
+            // Breakdown boxes - Add null check
+            const timeBreakdownElement = document.getElementById('studentTimeBreakdown');
+            if (timeBreakdownElement) {
+                timeBreakdownElement.innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+                        <div style="padding:12px;background:#dbeafe;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#1e40af;">${easyTime}s</div>
+                            <div style="font-size:12px;color:#1e40af;">Per Question</div>
+                            <div style="font-size:11px;color:#1e40af;margin-top:4px;">Easy</div>
+                        </div>
+                        <div style="padding:12px;background:#ede9fe;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#5b21b6;">${mediumTime}s</div>
+                            <div style="font-size:12px;color:#5b21b6;">Per Question</div>
+                            <div style="font-size:11px;color:#5b21b6;margin-top:4px;">Medium</div>
+                        </div>
+                        <div style="padding:12px;background:#fce7f3;border-radius:10px;">
+                            <div style="font-size:1.5rem;font-weight:700;color:#9d174d;">${hardTime}s</div>
+                            <div style="font-size:12px;color:#9d174d;">Per Question</div>
+                            <div style="font-size:11px;color:#9d174d;margin-top:4px;">Hard</div>
+                        </div>
                     </div>
-                    <div style="padding:12px;background:#ede9fe;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#5b21b6;">${mediumTime}s</div>
-                        <div style="font-size:12px;color:#5b21b6;">Per Question</div>
-                        <div style="font-size:11px;color:#5b21b6;margin-top:4px;">Medium</div>
-                    </div>
-                    <div style="padding:12px;background:#fce7f3;border-radius:10px;">
-                        <div style="font-size:1.5rem;font-weight:700;color:#9d174d;">${hardTime}s</div>
-                        <div style="font-size:12px;color:#9d174d;">Per Question</div>
-                        <div style="font-size:11px;color:#9d174d;margin-top:4px;">Hard</div>
-                    </div>
-                </div>
-            `;
+                `;
+            } else {
+                console.log('⚠️ studentTimeBreakdown element not found in DOM');
+            }
         }
         
         function renderStudentPerformanceTrend(results) {
