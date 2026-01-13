@@ -283,6 +283,16 @@
             </form>
             
             <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
+                <!-- Role Selection - First Field -->
+                <div class="form-group">
+                    <label>I am a...</label>
+                    <select id="regRole" onchange="toggleParentFields()">
+                        <option value="student">Student</option>
+                        <option value="tutor">Tutor / Teacher</option>
+                    </select>
+                    <small style="color:var(--gray);font-size:11px;">Select your role to see relevant fields</small>
+                </div>
+
                 <div class="form-group">
                     <label>Full Name (no spaces allowed)</label>
                     <input type="text" id="regName" required placeholder="JohnDoe" pattern="^\S+$" title="No spaces allowed in username" oninput="this.value = this.value.replace(/\s/g, '')">
@@ -296,6 +306,26 @@
                     <label>Phone Number</label>
                     <input type="tel" id="regPhone" required placeholder="9876543210" pattern="[0-9]{10}" title="Enter 10 digit phone number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters">
+                </div>
+                <div class="form-group">
+                    <label>Grade / Class</label>
+                    <select id="regGrade" required>
+                        <option value="">Select your grade</option>
+                        <option value="5">Class 5 (Middle School)</option>
+                        <option value="6">Class 6 (Middle School)</option>
+                        <option value="7">Class 7 (Middle School)</option>
+                        <option value="8">Class 8 (Middle School)</option>
+                        <option value="9">Class 9 (Secondary)</option>
+                        <option value="10">Class 10 (Secondary)</option>
+                        <option value="11">Class 11 (Senior Secondary)</option>
+                        <option value="12">Class 12 (Senior Secondary)</option>
+                    </select>
+                    <small style="color:var(--gray);font-size:11px;">This determines your subject options and quiz content</small>
+                </div>
+
                 <!-- School Name (for Students only) -->
                 <div class="form-group" id="studentSchoolField">
                     <label>School Name</label>
@@ -318,6 +348,7 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label>City</label>
                     <input type="text" id="regCity" required placeholder="e.g., Mumbai" maxlength="50">
@@ -325,32 +356,6 @@
                 <div class="form-group">
                     <label>Town/Area</label>
                     <input type="text" id="regTown" required placeholder="e.g., Andheri West" maxlength="50">
-                </div>
-                <div class="form-group">
-                    <label>Grade / Class</label>
-                    <select id="regGrade" required>
-                        <option value="">Select your grade</option>
-                        <option value="5">Class 5 (Middle School)</option>
-                        <option value="6">Class 6 (Middle School)</option>
-                        <option value="7">Class 7 (Middle School)</option>
-                        <option value="8">Class 8 (Middle School)</option>
-                        <option value="9">Class 9 (Secondary)</option>
-                        <option value="10">Class 10 (Secondary)</option>
-                        <option value="11">Class 11 (Senior Secondary)</option>
-                        <option value="12">Class 12 (Senior Secondary)</option>
-                    </select>
-                    <small style="color:var(--gray);font-size:11px;">This determines your subject options and quiz content</small>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters">
-                </div>
-                <div class="form-group">
-                    <label>I am a...</label>
-                    <select id="regRole" onchange="toggleParentFields()">
-                        <option value="student">Student</option>
-                        <option value="tutor">Tutor / Teacher</option>
-                    </select>
                 </div>
                 <div id="parentFieldsGroup" style="display:none;">
                     <div class="form-group">
