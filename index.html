@@ -4146,19 +4146,31 @@
         async function checkMilestone(type, currentValue) {
             // Get milestones of this type that user hasn't earned
             const { data: milestones } = await supabaseClient.from('milestones')
-                .select('*')
+                .select('id, milestone_type, target_value, reward_coins, title, description')
                 .eq('milestone_type', type)
                 .lte('target_value', currentValue);
-            
+
             if (!milestones) return;
-            
+
             for (const milestone of milestones) {
-                // Check if already earned
-                const { data: existing } = await supabaseClient.from('user_milestones')
-                    .select('id')
+                // Check if already earned - don't use .single() as it causes 406 if not found
+                const { data: existing, error: checkError } = await supabaseClient
+                    .from('user_milestones')
+                    .select('id, user_id, milestone_id')
                     .eq('user_id', currentUser.id)
                     .eq('milestone_id', milestone.id)
-                    .single();
+                    .limit(1);
+
+                // If error (like 406) or record exists, skip
+                if (checkError) {
+                    console.warn('Error checking milestone:', checkError);
+                    continue;
+                }
+
+                if (existing && existing.length > 0) {
+                    // Already earned
+                    continue;
+                }
                 
                 if (!existing) {
                     // Award milestone
@@ -6376,8 +6388,17 @@
                 console.log('4️⃣ Fetching quiz details for IDs:', quizIds);
                 const { data: quizzes, error: quizError } = await supabaseClient
                     .from('saved_quizzes')
-                    .select('id, title, topic, subject, difficulty, total_questions, tutor_id')
+                    .select('id, title, topic, subject, difficulty, question_count, tutor_id')
                     .in('id', quizIds);
+
+                if (quizError) {
+                    console.error('❌ Error fetching quizzes:', quizError);
+                    console.error('   Error details:', {
+                        message: quizError.message,
+                        code: quizError.code,
+                        details: quizError.details
+                    });
+                }
 
                 console.log('   Quizzes fetched:', quizzes?.length || 0, 'Error:', quizError);
                 const quizMap = {};
@@ -6506,39 +6527,130 @@
 
         // Start an assigned quiz
         async function startAssignedQuiz(quizId) {
-            console.log('▶️ Starting assigned quiz:', quizId);
+            console.log('========================================');
+            console.log('▶️ STARTING ASSIGNED QUIZ');
+            console.log('========================================');
+            console.log('Quiz ID:', quizId);
 
             try {
-                const { data: quiz } = await supabaseClient.from('saved_quizzes')
-                    .select('*')
+                showLoading('Loading quiz...');
+
+                // Fetch quiz with all details
+                console.log('1️⃣ Fetching quiz from saved_quizzes...');
+                const { data: quiz, error: quizError } = await supabaseClient
+                    .from('saved_quizzes')
+                    .select('id, title, topic, subject, difficulty, question_count, questions, tutor_id')
                     .eq('id', quizId)
                     .single();
 
-                if (!quiz || !quiz.questions) {
-                    showToast('Quiz not found or has no questions', 'error');
+                if (quizError) {
+                    console.error('❌ Error fetching quiz:', quizError);
+                    hideLoading();
+                    showToast('Error loading quiz: ' + quizError.message, 'error');
                     return;
                 }
 
-                // Set up quiz
-                currentQuiz = quiz.questions;
-                currentQuestionIndex = 0;
-                quizScore = 0;
-                window.currentQuizMetadata = {
+                if (!quiz) {
+                    console.error('❌ Quiz not found');
+                    hideLoading();
+                    showToast('Quiz not found', 'error');
+                    return;
+                }
+
+                console.log('✅ Quiz fetched:', {
+                    id: quiz.id,
+                    title: quiz.title,
                     topic: quiz.topic,
                     subject: quiz.subject,
                     difficulty: quiz.difficulty,
+                    question_count: quiz.question_count,
+                    questions_type: typeof quiz.questions,
+                    questions_length: Array.isArray(quiz.questions) ? quiz.questions.length : 'N/A'
+                });
+
+                // Parse questions if they're a JSON string
+                console.log('2️⃣ Parsing questions...');
+                let parsedQuestions;
+
+                if (typeof quiz.questions === 'string') {
+                    console.log('   Questions are a string, parsing JSON...');
+                    try {
+                        parsedQuestions = JSON.parse(quiz.questions);
+                        console.log('   ✅ Parsed JSON successfully');
+                    } catch (e) {
+                        console.error('   ❌ Failed to parse questions JSON:', e);
+                        hideLoading();
+                        showToast('Error: Quiz questions are malformed', 'error');
+                        return;
+                    }
+                } else if (Array.isArray(quiz.questions)) {
+                    console.log('   Questions are already an array');
+                    parsedQuestions = quiz.questions;
+                } else {
+                    console.error('   ❌ Questions are neither string nor array:', typeof quiz.questions);
+                    hideLoading();
+                    showToast('Error: Invalid quiz format', 'error');
+                    return;
+                }
+
+                console.log('✅ Questions loaded:', parsedQuestions?.length || 0, 'questions');
+                console.log('   First question preview:', parsedQuestions?.[0]?.question?.substring(0, 50) + '...');
+
+                if (!parsedQuestions || parsedQuestions.length === 0) {
+                    console.error('❌ Quiz has no questions!');
+                    hideLoading();
+                    showToast('Error: Quiz has no questions', 'error');
+                    return;
+                }
+
+                // Set up quiz - LOAD QUESTIONS INTO currentQuiz
+                console.log('3️⃣ Loading quiz into game state...');
+                currentQuiz = parsedQuestions;
+                currentQuestionIndex = 0;
+                quizScore = 0;
+
+                // Set metadata with proper title/topic
+                const quizTitle = quiz.topic || quiz.title || 'Quiz';
+                window.currentQuizMetadata = {
+                    topic: quizTitle,
+                    subject: quiz.subject || 'General',
+                    difficulty: quiz.difficulty || 'medium',
                     sharedQuizId: quiz.id
                 };
-                
-                console.log('📌 Set sharedQuizId:', quiz.id);
-                console.log('📌 currentQuizMetadata:', window.currentQuizMetadata);
 
-                // Navigate to quiz page (use 'newQuiz' not 'newQuizPage')
+                console.log('✅ Quiz state loaded:', {
+                    currentQuiz_length: currentQuiz.length,
+                    currentQuestionIndex: currentQuestionIndex,
+                    quizScore: quizScore,
+                    metadata: window.currentQuizMetadata
+                });
+
+                console.log('📌 Snapshot before starting UI:');
+                console.log('   currentQuiz length:', currentQuiz?.length || 0);
+                console.log('   Score:', quizScore, '/', currentQuiz?.length || 0);
+                console.log('   Total questions:', currentQuiz?.length || 0);
+
+                // Navigate to quiz page
+                console.log('4️⃣ Navigating to quiz page...');
                 showPage('newQuiz');
+
+                // Start the quiz UI
+                console.log('5️⃣ Starting quiz UI...');
                 startQuizUI();
-                showToast('Quiz started!', 'success');
+
+                hideLoading();
+                showToast(`Starting: ${quizTitle}`, 'success');
+
+                console.log('========================================');
+                console.log('✅ QUIZ STARTED SUCCESSFULLY');
+                console.log('========================================');
             } catch (error) {
-                console.error('❌ Error starting assigned quiz:', error);
+                console.error('========================================');
+                console.error('❌ FATAL ERROR STARTING QUIZ');
+                console.error('========================================');
+                console.error('Error:', error);
+                console.error('Stack:', error.stack);
+                hideLoading();
                 showToast('Error starting quiz: ' + error.message, 'error');
             }
         }
