@@ -6630,9 +6630,11 @@
                 console.log('   Score:', quizScore, '/', currentQuiz?.length || 0);
                 console.log('   Total questions:', currentQuiz?.length || 0);
 
-                // Navigate to quiz page
-                console.log('4️⃣ Navigating to quiz page...');
-                showPage('newQuiz');
+                // Navigate to quiz page - DO NOT use showPage() as it clears quiz state
+                console.log('4️⃣ Navigating to quiz page (bypassing clear)...');
+                document.querySelectorAll('#studentApp .page').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('#studentApp .nav-item').forEach(n => n.classList.remove('active'));
+                document.getElementById('newQuizPage').classList.add('active');
 
                 // Start the quiz UI
                 console.log('5️⃣ Starting quiz UI...');
