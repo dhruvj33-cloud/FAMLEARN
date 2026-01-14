@@ -4755,7 +4755,11 @@
 
             if (loginData.user) {
                 console.log('📥 Fetching user profile...');
-                const { data: profile, error: profileError } = await supabaseClient.from('users').select('*').eq('email', email).single();
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('users')
+                    .select('id, email, name, phone, role, points, quiz_attempts, role_locked, total_time, streak, current_streak, parent_email, parent_phone, school_name, city, town, grade, institute_name, institute_type, subscription_tier, subscription_status, trial_start_date, trial_end_date, subscription_start_date, subscription_end_date, quizzes_created_today, quizzes_created_this_month, quiz_library_count, account_status, created_at, institute_tagline')
+                    .eq('email', email)
+                    .single();
 
                 if (profileError) {
                     console.error('❌ Profile fetch error:', profileError);
@@ -5027,9 +5031,13 @@
             try {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                
+
                 // Get user profile
-                const { data: profile, error: profileError } = await supabaseClient.from('users').select('*').eq('email', email).single();
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('users')
+                    .select('id, email, name, phone, role, points, quiz_attempts, role_locked, total_time, streak, current_streak, parent_email, parent_phone, school_name, city, town, grade, institute_name, institute_type, subscription_tier, subscription_status, trial_start_date, trial_end_date, subscription_start_date, subscription_end_date, quizzes_created_today, quizzes_created_this_month, quiz_library_count, account_status, created_at, institute_tagline')
+                    .eq('email', email)
+                    .single();
 
                 // If profile doesn't exist, create it
                 if (profileError || !profile) {
@@ -8871,9 +8879,13 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         async function addStudentToBatch(e) {
             e.preventDefault();
             const email = document.getElementById('addStudentEmail').value.trim().toLowerCase();
-            
+
             // Find student by email
-            const { data: student } = await supabaseClient.from('users').select('*').eq('email', email).single();
+            const { data: student } = await supabaseClient
+                .from('users')
+                .select('id, name, email, role, grade, school_name, points, current_streak')
+                .eq('email', email)
+                .single();
             
             if (!student) {
                 showToast('Student not found. They must register first.', 'error');
@@ -8926,9 +8938,13 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             
             let added = 0;
             let failed = 0;
-            
+
             for (const email of emails) {
-                const { data: student } = await supabaseClient.from('users').select('*').eq('email', email).single();
+                const { data: student } = await supabaseClient
+                    .from('users')
+                    .select('id, name, email, role, grade, school_name')
+                    .eq('email', email)
+                    .single();
                 
                 if (!student || student.role !== 'student') {
                     failed++;
@@ -11027,7 +11043,11 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         async function checkAuth() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                const { data: profile } = await supabaseClient.from('users').select('*').eq('id', session.user.id).single();
+                const { data: profile } = await supabaseClient
+                    .from('users')
+                    .select('id, email, name, phone, role, points, quiz_attempts, role_locked, total_time, streak, current_streak, parent_email, parent_phone, school_name, city, town, grade, institute_name, institute_type, subscription_tier, subscription_status, trial_start_date, trial_end_date, subscription_start_date, subscription_end_date, quizzes_created_today, quizzes_created_this_month, quiz_library_count, account_status, created_at, institute_tagline')
+                    .eq('id', session.user.id)
+                    .single();
                 if (profile) {
                     currentUser = await ensureSubscriptionFields(profile);
                     initApp();
