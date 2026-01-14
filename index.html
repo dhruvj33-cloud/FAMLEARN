@@ -8711,10 +8711,35 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             const select = document.getElementById('tutorQuizBatch');
             const assignSelect = document.getElementById('assignBatchSelect');
             const dashboardBatchSelect = document.getElementById('dashboardBatchSelect');
-            
+
             if (batches && batches.length > 0) {
-                const options = '<option value="">Select Batch</option>' + 
-                    batches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+                // Get batch grades by fetching students in each batch
+                const batchGrades = await Promise.all(batches.map(async (batch) => {
+                    const { data: students } = await supabaseClient
+                        .from('batch_students')
+                        .select('student_id, users(grade)')
+                        .eq('batch_id', batch.id);
+
+                    if (!students || students.length === 0) {
+                        return { batchId: batch.id, batchName: batch.name, grade: null };
+                    }
+
+                    // Get most common grade
+                    const grades = students.map(s => s.users?.grade).filter(g => g);
+                    const gradeCounts = {};
+                    grades.forEach(g => gradeCounts[g] = (gradeCounts[g] || 0) + 1);
+                    const mostCommonGrade = Object.keys(gradeCounts).length > 0
+                        ? Object.keys(gradeCounts).reduce((a, b) => gradeCounts[a] > gradeCounts[b] ? a : b)
+                        : null;
+
+                    return { batchId: batch.id, batchName: batch.name, grade: mostCommonGrade };
+                }));
+
+                const options = '<option value="">Select Batch</option>' +
+                    batchGrades.map(b => {
+                        const gradeDisplay = b.grade ? ` (Grade ${b.grade})` : '';
+                        return `<option value="${b.batchId}">${b.batchName}${gradeDisplay}</option>`;
+                    }).join('');
                 if (select) select.innerHTML = options;
                 if (assignSelect) assignSelect.innerHTML = options;
                 if (dashboardBatchSelect) dashboardBatchSelect.innerHTML = options;
@@ -10305,13 +10330,16 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             const subject = document.getElementById('weaknessSubject')?.value;
             const blockSelect = document.getElementById('weaknessBlock');
             if (!blockSelect) return;
-            
+
             blockSelect.innerHTML = '<option value="">All Blocks</option>';
-            
-            if (subject && SUBJECT_BLOCKS[subject]) {
-                SUBJECT_BLOCKS[subject].forEach(block => {
-                    blockSelect.innerHTML += `<option value="${block}">${block}</option>`;
-                });
+
+            if (subject) {
+                const blocks = getBlocksForSubject(subject);
+                if (blocks && blocks.length > 0) {
+                    blocks.forEach(block => {
+                        blockSelect.innerHTML += `<option value="${block}">${block}</option>`;
+                    });
+                }
             }
         }
         
