@@ -6324,15 +6324,15 @@
                 const batchIds = studentBatches.map(b => b.batch_id);
                 console.log('2️⃣ Student is in batches:', batchIds);
 
-                // Get assigned quizzes for these batches (simplified query)
+                // Get assigned quizzes for these batches (explicit column selection)
                 const { data: assignments, error: assignError } = await supabaseClient
                     .from('quiz_assignments')
-                    .select('*')
+                    .select('id, quiz_id, batch_id, tutor_id, deadline, instructions, created_at')
                     .in('batch_id', batchIds)
                     .order('deadline', { ascending: true });
 
                 console.log('3️⃣ Quiz assignments found:', assignments?.length || 0, 'Error:', assignError);
-                console.log('   Assignments data:', assignments);
+                console.log('   Assignments data:', JSON.stringify(assignments, null, 2));
 
                 if (!assignments || assignments.length === 0) {
                     console.log('❌ No quiz assignments for these batches');
@@ -6342,32 +6342,48 @@
 
                 // Get quiz details separately
                 const quizIds = assignments.map(a => a.quiz_id).filter(Boolean);
-                const { data: quizzes } = await supabaseClient
+                console.log('4️⃣ Fetching quiz details for IDs:', quizIds);
+                const { data: quizzes, error: quizError } = await supabaseClient
                     .from('saved_quizzes')
-                    .select('*')
+                    .select('id, title, topic, subject, difficulty, total_questions, tutor_id')
                     .in('id', quizIds);
-                
+
+                console.log('   Quizzes fetched:', quizzes?.length || 0, 'Error:', quizError);
                 const quizMap = {};
                 quizzes?.forEach(q => quizMap[q.id] = q);
 
                 // Get batch names
-                const { data: batchesData } = await supabaseClient
+                console.log('5️⃣ Fetching batch names for IDs:', batchIds);
+                const { data: batchesData, error: batchError } = await supabaseClient
                     .from('batches')
                     .select('id, name')
                     .in('id', batchIds);
-                
+
+                console.log('   Batches fetched:', batchesData?.length || 0, 'Error:', batchError);
                 const batchMap = {};
                 batchesData?.forEach(b => batchMap[b.id] = b.name);
 
-                // Get tutor names
+                // Get tutor names from assignments
                 const tutorIds = assignments.map(a => a.tutor_id).filter(Boolean);
-                const { data: tutors } = await supabaseClient
+                console.log('6️⃣ Tutor IDs from assignments:', tutorIds);
+
+                if (tutorIds.length === 0) {
+                    console.warn('⚠️ WARNING: No tutor IDs found in assignments! All will show as "Unknown Tutor"');
+                }
+
+                const { data: tutors, error: tutorError } = await supabaseClient
                     .from('users')
-                    .select('id, name')
+                    .select('id, name, email')
                     .in('id', tutorIds);
-                
+
+                console.log('   Tutors fetched:', tutors?.length || 0, 'Error:', tutorError);
+                console.log('   Tutor details:', tutors);
+
                 const tutorMap = {};
-                tutors?.forEach(t => tutorMap[t.id] = t.name);
+                tutors?.forEach(t => {
+                    tutorMap[t.id] = t.name;
+                    console.log(`   📝 Mapped tutor ${t.id} -> ${t.name}`);
+                });
 
                 // Check completion status - ONLY for current user
                 console.log('🔍 Checking completions for user:', currentUser.id);
@@ -6380,14 +6396,30 @@
                 const completedQuizIds = new Set(completions?.map(c => c.shared_quiz_id).filter(Boolean) || []);
                 console.log('✅ Completed quiz IDs for this user:', [...completedQuizIds]);
 
+                console.log('========================================');
+                console.log('7️⃣ Rendering', assignments.length, 'assigned quizzes');
+                console.log('========================================');
+
                 // Render assigned quizzes
-                const html = assignments.map(assignment => {
+                const html = assignments.map((assignment, index) => {
                     const quiz = quizMap[assignment.quiz_id] || {};
                     const batchName = batchMap[assignment.batch_id] || 'Unknown Batch';
                     const tutorName = tutorMap[assignment.tutor_id] || 'Unknown Tutor';
                     const isCompleted = completedQuizIds.has(assignment.quiz_id);
                     const dueDate = assignment.deadline ? new Date(assignment.deadline) : null;
                     const isOverdue = !isCompleted && dueDate && dueDate < new Date();
+
+                    console.log(`   Assignment ${index + 1}:`, {
+                        quiz_id: assignment.quiz_id,
+                        quiz_title: quiz.title || 'N/A',
+                        batch_id: assignment.batch_id,
+                        batch_name: batchName,
+                        tutor_id: assignment.tutor_id,
+                        tutor_name: tutorName,
+                        tutor_in_map: assignment.tutor_id in tutorMap,
+                        deadline: assignment.deadline,
+                        completed: isCompleted
+                    });
 
                     return `
                         <div style="border:1px solid #e5e7eb;border-radius:10px;padding:15px;margin-bottom:15px;background:${isCompleted ? '#f0fdf4' : isOverdue ? '#fef2f2' : 'white'};">
@@ -9302,16 +9334,19 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 
                 // Assign to batch if selected
                 if (batchId && savedQuiz) {
+                    console.log('📝 Assigning quiz to batch:', { quiz_id: savedQuiz.id, batch_id: batchId, tutor_id: currentUser.id });
                     const { error: assignError } = await supabaseClient.from('quiz_assignments').insert([{
                         quiz_id: savedQuiz.id,
                         batch_id: batchId,
-                        deadline: deadline || null
+                        tutor_id: currentUser.id,
+                        deadline: deadline || null,
+                        instructions: null
                     }]);
-                    
+
                     if (assignError) {
                         console.error('❌ Error assigning quiz:', assignError);
                     } else {
-                        console.log('✅ Quiz assigned to batch:', batchId);
+                        console.log('✅ Quiz assigned to batch:', batchId, 'by tutor:', currentUser.id, currentUser.name);
                     }
                 }
                 
