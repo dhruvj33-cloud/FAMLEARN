@@ -1763,12 +1763,12 @@
             
             <!-- Student Detail Page -->
             <div class="page" id="studentDetailPage">
-                <div class="page-header">
+                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <button class="btn btn-secondary" style="width:auto;padding:8px 15px;" onclick="showTutorPage('students')">← Back</button>
                         <h1 class="page-title" id="studentDetailTitle">Student Details</h1>
                     </div>
-                    <button class="btn btn-success" style="width:auto;padding:8px 20px;display:flex;align-items:center;gap:8px;" onclick="shareStudentReport()">
+                    <button onclick="shareStudentReport()" style="background: #25D366; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 14px;">
                         <span>📲</span>
                         <span>Share to WhatsApp</span>
                     </button>
@@ -1857,11 +1857,10 @@
                                     <th>Difficulty</th>
                                     <th>Score</th>
                                     <th>Time</th>
-                                    <th>Points</th>
                                 </tr>
                             </thead>
                             <tbody id="studentQuizHistoryBody">
-                                <tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">No quizzes yet</td></tr>
+                                <tr><td colspan="5" style="text-align:center;color:var(--gray);padding:20px;">No quizzes yet</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2050,23 +2049,38 @@
                 <!-- White Label Settings -->
                 <div class="card">
                     <h3 style="margin-bottom:20px;">🏫 Institute Branding</h3>
-                    <p style="color:var(--gray);margin-bottom:20px;">Customize how your institute appears to students</p>
-                    
+                    <p style="color:var(--gray);margin-bottom:20px;">Customize how your institute appears to students and in WhatsApp reports</p>
+
+                    <div class="form-group">
+                        <label>Institute Logo</label>
+                        <div style="margin-bottom:10px;">
+                            <div id="instituteLogoPreview" style="width:100px;height:100px;border:2px dashed #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:#f9fafb;cursor:pointer;overflow:hidden;" onclick="document.getElementById('instituteLogoInput').click()">
+                                <img id="instituteLogoImg" style="display:none;width:100%;height:100%;object-fit:contain;" />
+                                <span id="instituteLogoPlaceholder" style="color:#9ca3af;font-size:14px;">📷 Click to upload</span>
+                            </div>
+                            <input type="file" id="instituteLogoInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+                            <small style="color:var(--gray);font-size:12px;">Square images (200x200px) work best. Max 2MB.</small>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Institute / Coaching Name</label>
-                        <input type="text" id="instituteName" placeholder="e.g., Excel Academy, Bright Future Coaching">
+                        <input type="text" id="instituteName" placeholder="e.g., Excel Academy, Bright Future Coaching" oninput="updateBrandingPreview()">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Tagline (Optional)</label>
-                        <input type="text" id="instituteTagline" placeholder="e.g., Excellence in Education, Learn. Grow. Succeed.">
+                        <input type="text" id="instituteTagline" placeholder="e.g., Excellence in Education, Learn. Grow. Succeed." oninput="updateBrandingPreview()">
                     </div>
-                    
+
                     <div style="background:#f0f9ff;padding:15px;border-radius:8px;margin:20px 0;">
                         <strong>Preview:</strong>
-                        <div id="brandingPreview" style="margin-top:10px;padding:15px;background:var(--dark);border-radius:8px;color:white;">
-                            <div id="previewInstituteName" style="font-size:18px;font-weight:600;">🎓 FamLearn Pro</div>
-                            <div id="previewTagline" style="font-size:12px;color:#9ca3af;">AI-Powered Learning Analytics</div>
+                        <div id="brandingPreview" style="margin-top:10px;padding:15px;background:var(--dark);border-radius:8px;color:white;display:flex;align-items:center;gap:12px;">
+                            <img id="previewLogo" style="display:none;width:50px;height:50px;border-radius:8px;object-fit:contain;background:white;padding:4px;" />
+                            <div>
+                                <div id="previewInstituteName" style="font-size:18px;font-weight:600;">🎓 FamLearn Pro</div>
+                                <div id="previewTagline" style="font-size:12px;color:#9ca3af;">AI-Powered Learning Analytics</div>
+                            </div>
                         </div>
                     </div>
                     
@@ -10148,11 +10162,11 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 document.getElementById('studentPoints').textContent = student?.points || 0;
                 document.getElementById('studentStreak').textContent = student?.current_streak || 0;
 
-                // Fetch quiz results with proper error handling
+                // Fetch quiz results with proper error handling - using minimal columns that exist
                 console.log('📤 Fetching quiz results from quiz_results table...');
                 const { data: results, error: resultsError } = await supabaseClient
                     .from('quiz_results')
-                    .select('id, user_id, topic, subject, difficulty, score, total_questions, time_taken, points_earned, created_at, answers')
+                    .select('id, user_id, topic, subject, difficulty, score, total_questions, time_taken, created_at')
                     .eq('user_id', studentId)
                     .order('created_at', { ascending: false });
 
@@ -10184,7 +10198,6 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                                 <td><span class="badge badge-${r.difficulty === 'hard' ? 'danger' : r.difficulty === 'medium' ? 'warning' : 'success'}">${r.difficulty || 'N/A'}</span></td>
                                 <td><span class="badge ${percent >= 70 ? 'badge-success' : percent >= 50 ? 'badge-warning' : 'badge-danger'}">${r.score}/${r.total_questions} (${percent}%)</span></td>
                                 <td>${formatTime(r.time_taken || 0)}</td>
-                                <td>+${r.points_earned || 0}</td>
                             </tr>
                         `;
                     }).join('');
@@ -10261,7 +10274,7 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
 
                     console.log('✅ All student analytics rendered successfully');
                 } else {
-                    document.getElementById('studentQuizHistoryBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:20px;">No quizzes yet</td></tr>';
+                    document.getElementById('studentQuizHistoryBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:20px;">No quizzes yet</td></tr>';
                     document.getElementById('studentTopicPerformance').innerHTML = '<div class="empty-state" style="padding:20px;"><p>No data yet</p></div>';
                 }
 
@@ -10461,6 +10474,7 @@ Sent by: ${currentUser.name || 'Tutor'}, ${currentUser.institute_name || 'FamLea
             if (page === 'students') loadAllStudents();
             if (page === 'tutorDashboard') loadTutorStats();
             if (page === 'analytics') loadAnalytics();
+            if (page === 'settings') loadBrandingSettings();
         }
         
         // ========================================
@@ -11095,30 +11109,120 @@ Sent by: ${currentUser.name || 'Tutor'}, ${currentUser.institute_name || 'FamLea
             }
         }
         
+        // Load existing branding settings
+        function loadBrandingSettings() {
+            if (!currentUser) return;
+
+            const nameInput = document.getElementById('instituteName');
+            const taglineInput = document.getElementById('instituteTagline');
+            const logoImg = document.getElementById('instituteLogoImg');
+            const placeholder = document.getElementById('instituteLogoPlaceholder');
+            const previewLogo = document.getElementById('previewLogo');
+
+            if (nameInput && currentUser.institute_name) {
+                nameInput.value = currentUser.institute_name;
+            }
+
+            if (taglineInput && currentUser.institute_tagline) {
+                taglineInput.value = currentUser.institute_tagline;
+            }
+
+            if (currentUser.institute_logo) {
+                instituteLogo = currentUser.institute_logo;
+                if (logoImg) {
+                    logoImg.src = instituteLogo;
+                    logoImg.style.display = 'block';
+                }
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+                if (previewLogo) {
+                    previewLogo.src = instituteLogo;
+                    previewLogo.style.display = 'block';
+                }
+            }
+
+            updateBrandingPreview();
+        }
+
+        // Logo upload handler
+        let instituteLogo = null;
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('Logo must be less than 2MB', 'error');
+                return;
+            }
+
+            // Check if it's an image
+            if (!file.type.startsWith('image/')) {
+                showToast('Please upload an image file', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                instituteLogo = e.target.result; // Base64 string
+                const logoImg = document.getElementById('instituteLogoImg');
+                const placeholder = document.getElementById('instituteLogoPlaceholder');
+                const previewLogo = document.getElementById('previewLogo');
+
+                logoImg.src = instituteLogo;
+                logoImg.style.display = 'block';
+                placeholder.style.display = 'none';
+
+                previewLogo.src = instituteLogo;
+                previewLogo.style.display = 'block';
+
+                console.log('Logo uploaded successfully');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Live preview update
+        function updateBrandingPreview() {
+            const name = document.getElementById('instituteName')?.value || 'FamLearn Pro';
+            const tagline = document.getElementById('instituteTagline')?.value || 'AI-Powered Learning Analytics';
+
+            document.getElementById('previewInstituteName').textContent = name || '🎓 FamLearn Pro';
+            document.getElementById('previewTagline').textContent = tagline || 'AI-Powered Learning Analytics';
+        }
+
         async function saveBrandingSettings() {
             const instituteName = document.getElementById('instituteName').value.trim();
             const instituteTagline = document.getElementById('instituteTagline').value.trim();
-            
+
             if (!instituteName) {
                 showToast('Please enter institute name', 'error');
                 return;
             }
-            
+
             showLoading('Saving branding settings...');
-            
+
             try {
+                const updateData = {
+                    institute_name: instituteName,
+                    institute_tagline: instituteTagline
+                };
+
+                // Add logo if uploaded
+                if (instituteLogo) {
+                    updateData.institute_logo = instituteLogo;
+                }
+
                 const { error } = await supabaseClient.from('users')
-                    .update({
-                        institute_name: instituteName,
-                        institute_tagline: instituteTagline
-                    })
+                    .update(updateData)
                     .eq('id', currentUser.id);
-                
+
                 if (error) throw error;
-                
+
                 currentUser.institute_name = instituteName;
                 currentUser.institute_tagline = instituteTagline;
-                
+                if (instituteLogo) currentUser.institute_logo = instituteLogo;
+
                 updateHeaderBranding();
                 hideLoading();
                 showToast('Branding settings saved!', 'success');
