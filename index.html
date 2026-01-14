@@ -6324,15 +6324,46 @@
                 const batchIds = studentBatches.map(b => b.batch_id);
                 console.log('2️⃣ Student is in batches:', batchIds);
 
-                // Get assigned quizzes for these batches (explicit column selection)
-                const { data: assignments, error: assignError } = await supabaseClient
-                    .from('quiz_assignments')
-                    .select('id, quiz_id, batch_id, tutor_id, deadline, instructions, created_at')
-                    .in('batch_id', batchIds)
-                    .order('deadline', { ascending: true });
+                // Get assigned quizzes for these batches
+                // Try with tutor_id first, fall back without it if column doesn't exist
+                console.log('3️⃣ Fetching quiz assignments...');
+                let assignments, assignError;
 
-                console.log('3️⃣ Quiz assignments found:', assignments?.length || 0, 'Error:', assignError);
-                console.log('   Assignments data:', JSON.stringify(assignments, null, 2));
+                try {
+                    const result = await supabaseClient
+                        .from('quiz_assignments')
+                        .select('id, quiz_id, batch_id, tutor_id, deadline, instructions, created_at')
+                        .in('batch_id', batchIds)
+                        .order('deadline', { ascending: true });
+
+                    assignments = result.data;
+                    assignError = result.error;
+
+                    if (assignError) {
+                        console.error('❌ Error with tutor_id column:', assignError);
+                        // If error mentions column doesn't exist, try without tutor_id
+                        if (assignError.message?.includes('column') || assignError.code === '42703') {
+                            console.log('⚠️ tutor_id column not found, retrying without it...');
+                            const fallbackResult = await supabaseClient
+                                .from('quiz_assignments')
+                                .select('id, quiz_id, batch_id, deadline, instructions, created_at')
+                                .in('batch_id', batchIds)
+                                .order('deadline', { ascending: true });
+
+                            assignments = fallbackResult.data;
+                            assignError = fallbackResult.error;
+                            console.log('✅ Fetched without tutor_id column');
+                        }
+                    }
+                } catch (e) {
+                    console.error('❌ Exception fetching assignments:', e);
+                    assignError = e;
+                }
+
+                console.log('   Quiz assignments found:', assignments?.length || 0, 'Error:', assignError);
+                if (assignments) {
+                    console.log('   Assignments data:', JSON.stringify(assignments, null, 2));
+                }
 
                 if (!assignments || assignments.length === 0) {
                     console.log('❌ No quiz assignments for these batches');
@@ -9301,7 +9332,11 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         }
         
         async function saveTutorQuiz() {
+            console.log('========================================');
+            console.log('💾 SAVING TUTOR QUIZ');
+            console.log('========================================');
             console.log('saveTutorQuiz called');
+
             const title = document.getElementById('tutorQuizTitle').value.trim() || 'Untitled Quiz';
             const topic = document.getElementById('tutorQuizTopic').value.trim() || title;
             const subject = getTutorSubject();
@@ -9309,17 +9344,30 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             const batchId = document.getElementById('tutorQuizBatch').value;
             const deadline = document.getElementById('tutorQuizDeadline').value;
 
-            console.log('Save quiz data:', {
-                title, topic, subject, difficulty, batchId, deadline,
+            console.log('📝 Quiz data to save:', {
+                title,
+                topic,
+                subject,
+                difficulty,
+                batchId: batchId || 'None (not assigned to batch)',
+                deadline: deadline || 'No deadline',
                 questionCount: tutorGeneratedQuiz.length,
-                tutorId: currentUser.id
+                tutorId: currentUser.id,
+                tutorName: currentUser.name
             });
+
+            if (!tutorGeneratedQuiz || tutorGeneratedQuiz.length === 0) {
+                console.error('❌ No questions to save!');
+                showToast('No questions generated yet!', 'error');
+                return;
+            }
 
             showLoading('Saving quiz...');
 
             try {
-                // Save quiz
-                const { data: savedQuiz, error } = await supabaseClient.from('saved_quizzes').insert([{
+                // Save quiz to saved_quizzes table
+                console.log('1️⃣ Inserting into saved_quizzes table...');
+                const quizData = {
                     tutor_id: currentUser.id,
                     title,
                     topic,
@@ -9327,37 +9375,92 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     difficulty,
                     question_count: tutorGeneratedQuiz.length,
                     questions: tutorGeneratedQuiz
-                }]).select().single();
-                
-                if (error) throw error;
-                console.log('✅ Quiz saved:', savedQuiz);
-                
+                };
+                console.log('   Quiz data:', quizData);
+
+                const { data: savedQuiz, error } = await supabaseClient
+                    .from('saved_quizzes')
+                    .insert([quizData])
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('❌ Error saving quiz to database:', error);
+                    console.error('   Error details:', {
+                        message: error.message,
+                        code: error.code,
+                        details: error.details,
+                        hint: error.hint
+                    });
+                    throw error;
+                }
+
+                console.log('✅ Quiz saved successfully!');
+                console.log('   Saved quiz ID:', savedQuiz?.id);
+                console.log('   Saved quiz data:', savedQuiz);
+
                 // Assign to batch if selected
                 if (batchId && savedQuiz) {
-                    console.log('📝 Assigning quiz to batch:', { quiz_id: savedQuiz.id, batch_id: batchId, tutor_id: currentUser.id });
-                    const { error: assignError } = await supabaseClient.from('quiz_assignments').insert([{
+                    console.log('2️⃣ Assigning quiz to batch...');
+                    console.log('   Assignment data:', {
                         quiz_id: savedQuiz.id,
                         batch_id: batchId,
                         tutor_id: currentUser.id,
-                        deadline: deadline || null,
-                        instructions: null
-                    }]);
+                        deadline: deadline || null
+                    });
+
+                    const { error: assignError } = await supabaseClient
+                        .from('quiz_assignments')
+                        .insert([{
+                            quiz_id: savedQuiz.id,
+                            batch_id: batchId,
+                            tutor_id: currentUser.id,
+                            deadline: deadline || null,
+                            instructions: null
+                        }]);
 
                     if (assignError) {
-                        console.error('❌ Error assigning quiz:', assignError);
+                        console.error('❌ Error assigning quiz to batch:', assignError);
+                        console.error('   Assignment error details:', {
+                            message: assignError.message,
+                            code: assignError.code,
+                            details: assignError.details,
+                            hint: assignError.hint
+                        });
+                        // Don't throw - quiz is saved, just assignment failed
+                        showToast('Quiz saved but assignment failed: ' + assignError.message, 'warning');
                     } else {
-                        console.log('✅ Quiz assigned to batch:', batchId, 'by tutor:', currentUser.id, currentUser.name);
+                        console.log('✅ Quiz assigned to batch successfully!');
+                        console.log('   Assigned to batch:', batchId);
+                        console.log('   By tutor:', currentUser.id, currentUser.name);
                     }
+                } else {
+                    console.log('2️⃣ No batch selected - quiz not assigned to any batch');
                 }
-                
+
+                console.log('3️⃣ Cleaning up and refreshing UI...');
                 hideLoading();
-                showToast('Quiz saved!', 'success');
+                showToast('Quiz saved successfully!', 'success');
                 clearTutorQuiz();
+
+                console.log('4️⃣ Reloading tutor stats...');
                 loadTutorStats();
+
+                console.log('5️⃣ Reloading saved quizzes list...');
                 loadSavedQuizzes();
+
+                console.log('========================================');
+                console.log('✅ SAVE COMPLETE');
+                console.log('========================================');
             } catch (error) {
+                console.error('========================================');
+                console.error('❌ FATAL ERROR SAVING QUIZ');
+                console.error('========================================');
+                console.error('Error:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
                 hideLoading();
-                showToast('Error saving: ' + error.message, 'error');
+                showToast('Error saving quiz: ' + error.message, 'error');
             }
         }
         
@@ -9388,19 +9491,45 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         let currentQuizFilter = 'all';
         
         async function loadSavedQuizzes() {
-            const { data: quizzes } = await supabaseClient.from('saved_quizzes')
-                .select('*, quiz_assignments(id, batch_id, deadline, created_at, batches(name))')
-                .eq('tutor_id', currentUser.id)
-                .order('created_at', { ascending: false });
-            
-            if (!quizzes || quizzes.length === 0) {
-                document.getElementById('savedQuizzesBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:40px;">No saved quizzes yet. Create your first quiz!</td></tr>';
-                document.getElementById('quizUsageHistoryBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:30px;">No usage history yet</td></tr>';
-                updateQuizLibraryStats([], []);
-                return;
-            }
-            
-            allQuizzesData = quizzes;
+            console.log('========================================');
+            console.log('📚 LOADING SAVED QUIZZES');
+            console.log('========================================');
+            console.log('Current tutor:', currentUser.id, currentUser.name);
+
+            try {
+                const { data: quizzes, error } = await supabaseClient
+                    .from('saved_quizzes')
+                    .select('*, quiz_assignments(id, batch_id, deadline, created_at, batches(name))')
+                    .eq('tutor_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('❌ Error loading saved quizzes:', error);
+                    console.error('   Error details:', {
+                        message: error.message,
+                        code: error.code,
+                        details: error.details
+                    });
+                    throw error;
+                }
+
+                console.log('✅ Quizzes loaded:', quizzes?.length || 0);
+                if (quizzes && quizzes.length > 0) {
+                    console.log('   Quiz IDs:', quizzes.map(q => q.id));
+                    console.log('   Quiz titles:', quizzes.map(q => q.title));
+                    console.log('   Full quiz data:', quizzes);
+                }
+
+                if (!quizzes || quizzes.length === 0) {
+                    console.log('❌ No quizzes found for tutor:', currentUser.id);
+                    document.getElementById('savedQuizzesBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:40px;">No saved quizzes yet. Create your first quiz!</td></tr>';
+                    document.getElementById('quizUsageHistoryBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:30px;">No usage history yet</td></tr>';
+                    updateQuizLibraryStats(0, 0, 0, 0);
+                    return;
+                }
+
+                allQuizzesData = quizzes;
+                console.log('📦 Stored', quizzes.length, 'quizzes in allQuizzesData');
             
             // Calculate stats
             const totalQuizzes = quizzes.length;
@@ -9449,6 +9578,18 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
             
             // Render usage history
             loadQuizUsageHistory(quizzes);
+
+            console.log('========================================');
+            console.log('✅ SAVED QUIZZES LOADED SUCCESSFULLY');
+            console.log('========================================');
+            } catch (error) {
+                console.error('========================================');
+                console.error('❌ ERROR LOADING SAVED QUIZZES');
+                console.error('========================================');
+                console.error('Error:', error);
+                console.error('Error message:', error.message);
+                document.getElementById('savedQuizzesBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:40px;">Error loading quizzes: ' + error.message + '</td></tr>';
+            }
         }
         
         function updateQuizLibraryStats(total, assigned, unassigned, multiBatch) {
