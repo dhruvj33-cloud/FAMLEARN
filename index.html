@@ -6430,6 +6430,13 @@
                 console.log('========================================');
                 console.log('7️⃣ Rendering', assignments.length, 'assigned quizzes');
                 console.log('========================================');
+                console.log('📊 Student batches:', batchIds);
+                console.log('📊 Assignment batch IDs:', assignments.map(a => a.batch_id));
+                console.log('📊 Batch matching verification:');
+                assignments.forEach((a, i) => {
+                    const matches = batchIds.includes(a.batch_id);
+                    console.log(`   Assignment ${i + 1}: batch ${a.batch_id} - ${matches ? '✅ MATCH' : '❌ NO MATCH'}`);
+                });
 
                 // Render assigned quizzes
                 const html = assignments.map((assignment, index) => {
@@ -6440,16 +6447,20 @@
                     const dueDate = assignment.deadline ? new Date(assignment.deadline) : null;
                     const isOverdue = !isCompleted && dueDate && dueDate < new Date();
 
-                    console.log(`   Assignment ${index + 1}:`, {
+                    console.log(`   📝 Assignment ${index + 1}:`, {
+                        assignment_id: assignment.id,
                         quiz_id: assignment.quiz_id,
-                        quiz_title: quiz.title || 'N/A',
+                        quiz_title: quiz.title || 'MISSING QUIZ',
+                        quiz_found: !!quiz.title,
                         batch_id: assignment.batch_id,
                         batch_name: batchName,
-                        tutor_id: assignment.tutor_id,
+                        batch_found: batchName !== 'Unknown Batch',
+                        tutor_id: assignment.tutor_id || 'NULL',
                         tutor_name: tutorName,
-                        tutor_in_map: assignment.tutor_id in tutorMap,
-                        deadline: assignment.deadline,
-                        completed: isCompleted
+                        tutor_found: tutorName !== 'Unknown Tutor',
+                        deadline: assignment.deadline || 'No deadline',
+                        completed: isCompleted,
+                        created_at: assignment.created_at
                     });
 
                     return `
@@ -9402,40 +9413,93 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 // Assign to batch if selected
                 if (batchId && savedQuiz) {
                     console.log('2️⃣ Assigning quiz to batch...');
-                    console.log('   Assignment data:', {
+                    console.log('   📋 Assigning quiz:', savedQuiz.id, 'to batch:', batchId);
+
+                    const assignmentData = {
                         quiz_id: savedQuiz.id,
                         batch_id: batchId,
                         tutor_id: currentUser.id,
-                        deadline: deadline || null
-                    });
+                        deadline: deadline || null,
+                        instructions: null
+                    };
+                    console.log('   Assignment data:', assignmentData);
 
-                    const { error: assignError } = await supabaseClient
+                    // Try with tutor_id first, fallback without it if column doesn't exist
+                    let assignResult = await supabaseClient
                         .from('quiz_assignments')
-                        .insert([{
+                        .insert([assignmentData])
+                        .select();
+
+                    let assignError = assignResult.error;
+                    let assignedData = assignResult.data;
+
+                    // If tutor_id column doesn't exist, try without it
+                    if (assignError && (assignError.code === '42703' || assignError.message?.includes('column') || assignError.message?.includes('tutor_id'))) {
+                        console.warn('⚠️ tutor_id column not found in quiz_assignments, retrying without it...');
+
+                        const fallbackData = {
                             quiz_id: savedQuiz.id,
                             batch_id: batchId,
-                            tutor_id: currentUser.id,
                             deadline: deadline || null,
                             instructions: null
-                        }]);
+                        };
+
+                        console.log('   Retrying with data:', fallbackData);
+                        assignResult = await supabaseClient
+                            .from('quiz_assignments')
+                            .insert([fallbackData])
+                            .select();
+
+                        assignError = assignResult.error;
+                        assignedData = assignResult.data;
+                    }
 
                     if (assignError) {
-                        console.error('❌ Error assigning quiz to batch:', assignError);
-                        console.error('   Assignment error details:', {
+                        console.error('❌ ERROR: Assignment failed!');
+                        console.error('   Error details:', {
                             message: assignError.message,
                             code: assignError.code,
                             details: assignError.details,
                             hint: assignError.hint
                         });
-                        // Don't throw - quiz is saved, just assignment failed
-                        showToast('Quiz saved but assignment failed: ' + assignError.message, 'warning');
-                    } else {
-                        console.log('✅ Quiz assigned to batch successfully!');
-                        console.log('   Assigned to batch:', batchId);
-                        console.log('   By tutor:', currentUser.id, currentUser.name);
+                        hideLoading();
+                        showToast('⚠️ Quiz saved but NOT assigned to batch!\nError: ' + assignError.message, 'error');
+                        return; // Stop here so user knows assignment failed
                     }
+
+                    console.log('✅ Assignment saved successfully!');
+                    console.log('   Assigned data:', assignedData);
+
+                    // Verify assignment was saved - query to confirm
+                    console.log('🔍 Verifying assignment was saved...');
+                    const { data: verifyData, error: verifyError } = await supabaseClient
+                        .from('quiz_assignments')
+                        .select('id, quiz_id, batch_id')
+                        .eq('quiz_id', savedQuiz.id)
+                        .eq('batch_id', batchId);
+
+                    if (verifyError) {
+                        console.error('❌ Could not verify assignment:', verifyError);
+                    } else if (!verifyData || verifyData.length === 0) {
+                        console.error('❌ CRITICAL: Assignment not found in database after insert!');
+                        hideLoading();
+                        showToast('⚠️ Assignment may have failed - please check manually', 'error');
+                        return;
+                    } else {
+                        console.log('✅ VERIFIED: Assignment exists in database');
+                        console.log('   Found assignments:', verifyData);
+                        console.log('   Assignment ID:', verifyData[0]?.id);
+                    }
+
+                    console.log('📋 Quiz', savedQuiz.id, 'successfully assigned to batch', batchId);
+                    console.log('   Students in this batch will now see this quiz');
                 } else {
-                    console.log('2️⃣ No batch selected - quiz not assigned to any batch');
+                    if (!batchId) {
+                        console.log('2️⃣ ℹ️ No batch selected - quiz saved but NOT assigned to any batch');
+                        console.log('   Quiz will appear in Saved Quizzes but not in any student\'s Assigned Quizzes');
+                    } else if (!savedQuiz) {
+                        console.error('❌ Cannot assign - savedQuiz is missing!');
+                    }
                 }
 
                 console.log('3️⃣ Cleaning up and refreshing UI...');
