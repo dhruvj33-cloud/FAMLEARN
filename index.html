@@ -1463,12 +1463,28 @@
                         <div class="image-preview-grid" id="tutorImagePreviewGrid"></div>
                         
                         <div style="text-align:center;margin:15px 0;color:var(--gray);font-size:14px;">— OR —</div>
-                        
+
+                        <div class="form-group">
+                            <label>Grade / Standard</label>
+                            <select id="tutorQuizGrade" onchange="updateTutorSubjects()">
+                                <option value="">Select Grade</option>
+                                <option value="5">Class 5 (Middle School)</option>
+                                <option value="6">Class 6 (Middle School)</option>
+                                <option value="7">Class 7 (Middle School)</option>
+                                <option value="8">Class 8 (Middle School)</option>
+                                <option value="9">Class 9 (Secondary)</option>
+                                <option value="10">Class 10 (Secondary)</option>
+                                <option value="11">Class 11 (Senior Secondary)</option>
+                                <option value="12">Class 12 (Senior Secondary)</option>
+                            </select>
+                            <small style="color:var(--gray);font-size:11px;">Select grade first to see relevant subjects</small>
+                        </div>
+
                         <div class="form-group">
                             <label>Generate from Topic</label>
                             <input type="text" id="tutorQuizTopic" placeholder="e.g., Photosynthesis, World War 2, Algebra">
                         </div>
-                        
+
                         <div class="form-group">
                             <label>Subject</label>
                             <select id="tutorQuizSubject" onchange="toggleTutorOtherSubject()">
@@ -1748,8 +1764,14 @@
             <!-- Student Detail Page -->
             <div class="page" id="studentDetailPage">
                 <div class="page-header">
-                    <button class="btn btn-secondary" style="width:auto;padding:8px 15px;margin-right:15px;" onclick="showTutorPage('students')">← Back</button>
-                    <h1 class="page-title" id="studentDetailTitle">Student Details</h1>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <button class="btn btn-secondary" style="width:auto;padding:8px 15px;" onclick="showTutorPage('students')">← Back</button>
+                        <h1 class="page-title" id="studentDetailTitle">Student Details</h1>
+                    </div>
+                    <button class="btn btn-success" style="width:auto;padding:8px 20px;display:flex;align-items:center;gap:8px;" onclick="shareStudentReport()">
+                        <span>📲</span>
+                        <span>Share to WhatsApp</span>
+                    </button>
                 </div>
                 
                 <div class="grid-4" style="margin-bottom:25px;">
@@ -7095,7 +7117,55 @@
                 otherGroup.style.display = 'none';
             }
         }
-        
+
+        function updateTutorSubjects() {
+            const grade = document.getElementById('tutorQuizGrade').value;
+            const subjectSelect = document.getElementById('tutorQuizSubject');
+
+            if (!grade) {
+                // No grade selected, show all subjects
+                subjectSelect.innerHTML = `
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="History">History</option>
+                    <option value="Geography">Geography</option>
+                    <option value="English">English</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Economics">Economics</option>
+                    <option value="Other">Other</option>
+                `;
+                return;
+            }
+
+            // Get subjects for selected grade
+            const subjects = getSubjectsForGrade(parseInt(grade));
+            console.log(`📚 Updating tutor subjects for Grade ${grade}:`, subjects);
+
+            if (subjects && subjects.length > 0) {
+                subjectSelect.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('') +
+                    '<option value="Other">Other</option>';
+            } else {
+                // Fallback to all subjects
+                subjectSelect.innerHTML = `
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="History">History</option>
+                    <option value="Geography">Geography</option>
+                    <option value="English">English</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Economics">Economics</option>
+                    <option value="Other">Other</option>
+                `;
+            }
+
+            // Trigger other subject toggle in case "Other" was selected before
+            toggleTutorOtherSubject();
+        }
+
         function getTutorSubject() {
             const subject = document.getElementById('tutorQuizSubject').value;
             if (subject === 'Other') {
@@ -8701,6 +8771,7 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
         let tutorGeneratedQuiz = [];
         let currentBatchId = null;
         let currentStudentId = null;
+        let currentStudentData = null; // For WhatsApp sharing
         let allStudentsData = [];
         
         async function loadTutorStats() {
@@ -10081,7 +10152,7 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 console.log('📤 Fetching quiz results from quiz_results table...');
                 const { data: results, error: resultsError } = await supabaseClient
                     .from('quiz_results')
-                    .select('id, user_id, topic, subject, difficulty, score, total_questions, time_taken, points_earned, created_at, answers, block')
+                    .select('id, user_id, topic, subject, difficulty, score, total_questions, time_taken, points_earned, created_at, answers')
                     .eq('user_id', studentId)
                     .order('created_at', { ascending: false });
 
@@ -10194,6 +10265,15 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     document.getElementById('studentTopicPerformance').innerHTML = '<div class="empty-state" style="padding:20px;"><p>No data yet</p></div>';
                 }
 
+                // Store student data globally for WhatsApp sharing
+                currentStudentData = {
+                    student,
+                    results,
+                    quizCount,
+                    avgScore,
+                    topicStats: results && results.length > 0 ? topicStats : null
+                };
+
                 hideLoading();
                 console.log('✅ viewStudentDetails completed successfully');
 
@@ -10202,6 +10282,66 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                 hideLoading();
                 showToast('Error loading student details: ' + error.message, 'error');
             }
+        }
+
+        // Share student report to WhatsApp
+        function shareStudentReport() {
+            if (!currentStudentData || !currentStudentData.student) {
+                showToast('Please load student details first', 'error');
+                return;
+            }
+
+            const { student, results, quizCount, avgScore, topicStats } = currentStudentData;
+
+            // Find strongest and weakest subjects
+            let strongest = 'N/A';
+            let weakest = 'N/A';
+
+            if (topicStats) {
+                const topics = Object.entries(topicStats).map(([name, stats]) => ({
+                    name,
+                    accuracy: Math.round(stats.correct / stats.total * 100)
+                }));
+
+                if (topics.length > 0) {
+                    topics.sort((a, b) => b.accuracy - a.accuracy);
+                    strongest = `${topics[0].name} (${topics[0].accuracy}%)`;
+                    if (topics.length > 1) {
+                        weakest = `${topics[topics.length - 1].name} (${topics[topics.length - 1].accuracy}%)`;
+                    }
+                }
+            }
+
+            // Get most recent quiz
+            let recentQuiz = 'No quizzes attempted yet';
+            if (results && results.length > 0) {
+                const recent = results[0];
+                const recentScore = Math.round(recent.score / recent.total_questions * 100);
+                recentQuiz = `${recent.topic || recent.subject || 'Quiz'} - ${recentScore}%`;
+            }
+
+            // Build WhatsApp message
+            const reportText = `📊 *Student Report - FamLearn*
+
+Student: ${student.name || 'N/A'}
+Grade: ${student.grade || 'N/A'}
+
+📈 *Performance Summary:*
+- Quizzes Attempted: ${quizCount}
+- Average Score: ${avgScore}%
+- Strongest Subject: ${strongest}
+- Needs Improvement: ${weakest}
+
+Recent Quiz: ${recentQuiz}
+
+Sent by: ${currentUser.name || 'Tutor'}, ${currentUser.institute_name || 'FamLearn'}`;
+
+            // Open WhatsApp with pre-filled message
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(reportText)}`;
+            window.open(whatsappUrl, '_blank');
+
+            console.log('📲 WhatsApp share initiated');
+            showToast('Opening WhatsApp...', 'success');
         }
 
         // Helper function to render difficulty analytics
