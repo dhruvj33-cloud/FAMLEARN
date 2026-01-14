@@ -6354,12 +6354,12 @@
 
                 // Get batch names
                 console.log('5️⃣ Fetching batch names for IDs:', batchIds);
-                const { data: batchesData, error: batchError } = await supabaseClient
+                const { data: batchesData, error: batchesError } = await supabaseClient
                     .from('batches')
                     .select('id, name')
                     .in('id', batchIds);
 
-                console.log('   Batches fetched:', batchesData?.length || 0, 'Error:', batchError);
+                console.log('   Batches fetched:', batchesData?.length || 0, 'Error:', batchesError);
                 const batchMap = {};
                 batchesData?.forEach(b => batchMap[b.id] = b.name);
 
