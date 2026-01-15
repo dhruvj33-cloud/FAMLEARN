@@ -278,6 +278,7 @@
                 <div class="form-group">
                     <label>Password</label>
                     <input type="password" id="loginPassword" required placeholder="••••••••">
+                    <a href="#" onclick="showForgotPasswordModal(); return false;" style="font-size:12px;color:var(--primary);text-decoration:none;display:inline-block;margin-top:5px;">Forgot Password?</a>
                 </div>
                 <button type="submit" class="btn">Login</button>
             </form>
@@ -1763,15 +1764,11 @@
             
             <!-- Student Detail Page -->
             <div class="page" id="studentDetailPage">
-                <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+                <div class="page-header">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <button class="btn btn-secondary" style="width:auto;padding:8px 15px;" onclick="showTutorPage('students')">← Back</button>
                         <h1 class="page-title" id="studentDetailTitle">Student Details</h1>
                     </div>
-                    <button onclick="shareStudentReport()" style="background: #25D366; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                        <span>📲</span>
-                        <span>Share to WhatsApp</span>
-                    </button>
                 </div>
                 
                 <div class="grid-4" style="margin-bottom:25px;">
@@ -1845,8 +1842,16 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
                         <div class="card-title">📚 Quiz History</div>
+                        <div style="display:flex;gap:10px;">
+                            <button onclick="printStudentReport()" style="background:var(--secondary);color:white;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+                                <span>🖨️</span> Print Report
+                            </button>
+                            <button onclick="shareStudentReport()" style="background:#25D366;color:white;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+                                <span>📲</span> Share to WhatsApp
+                            </button>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -2513,6 +2518,44 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content" style="max-width:450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🔑 Reset Password</h3>
+                <button class="close-modal" onclick="closeModal('forgotPasswordModal')">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <p style="color:var(--gray);margin-bottom:20px;">Enter your email address and we'll send you a link to reset your password.</p>
+                <form onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="forgotPasswordEmail" required placeholder="your@email.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Send Reset Link</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tech Support Chat Modal -->
+    <div class="modal" id="supportChatModal" style="display:none;">
+        <div class="modal-content" id="supportChatContent" style="max-width:400px;height:550px;position:fixed;bottom:90px;right:20px;margin:0;border-radius:12px;display:flex;flex-direction:column;">
+            <div class="modal-header" style="flex-shrink:0;">
+                <h3 class="modal-title">💬 Tech Support</h3>
+                <button class="close-modal" onclick="closeSupportChat()">&times;</button>
+            </div>
+            <div id="supportChatBody" style="flex:1;overflow-y:auto;padding:20px;">
+                <!-- Chat content will be dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Support Button -->
+    <div id="supportChatBtn" onclick="openSupportChat()" style="position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; font-size: 24px;">
+        💬
     </div>
 
     <script>
@@ -5174,6 +5217,356 @@
             document.getElementById('studentApp').classList.remove('active');
             document.getElementById('tutorApp').classList.remove('active');
             document.getElementById('authScreen').style.display = 'flex';
+        }
+
+        // ========================================
+        // FORGOT PASSWORD
+        // ========================================
+        function showForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('active');
+        }
+
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotPasswordEmail').value.trim();
+
+            if (!email) {
+                showToast('Please enter your email address', 'error');
+                return;
+            }
+
+            showLoading('Sending reset link...');
+
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin
+                });
+
+                if (error) throw error;
+
+                hideLoading();
+                showToast('Password reset link sent to your email!', 'success');
+                closeModal('forgotPasswordModal');
+                document.getElementById('forgotPasswordEmail').value = '';
+            } catch (error) {
+                hideLoading();
+                console.error('Password reset error:', error);
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // ========================================
+        // TECH SUPPORT CHATBOT
+        // ========================================
+        let supportChatState = {
+            step: 1,
+            device: null,
+            issueType: null,
+            screenshot: null,
+            troubleshootingTried: []
+        };
+
+        function openSupportChat() {
+            document.getElementById('supportChatModal').style.display = 'flex';
+            document.getElementById('supportChatBtn').style.display = 'none';
+            showChatStep1();
+
+            // Make responsive on mobile
+            const content = document.getElementById('supportChatContent');
+            if (window.innerWidth <= 768) {
+                content.style.width = '100%';
+                content.style.height = '100vh';
+                content.style.bottom = '0';
+                content.style.right = '0';
+                content.style.borderRadius = '0';
+            }
+        }
+
+        function closeSupportChat() {
+            document.getElementById('supportChatModal').style.display = 'none';
+            document.getElementById('supportChatBtn').style.display = 'flex';
+            resetChatState();
+        }
+
+        function resetChatState() {
+            supportChatState = {
+                step: 1,
+                device: null,
+                issueType: null,
+                screenshot: null,
+                troubleshootingTried: []
+            };
+        }
+
+        function showChatStep1() {
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="margin-bottom:20px;">
+                    <strong>👋 Hi there! I'm here to help.</strong>
+                    <p style="margin-top:10px;color:var(--gray);">What device are you using?</p>
+                </div>
+                <button onclick="selectDevice('mobile')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:center;">
+                    <span style="font-size:20px;">📱</span> Mobile/Phone
+                </button>
+                <button onclick="selectDevice('desktop')" class="btn btn-secondary" style="width:100%;display:flex;align-items:center;gap:10px;justify-content:center;">
+                    <span style="font-size:20px;">💻</span> Computer/Laptop
+                </button>
+            `;
+        }
+
+        function selectDevice(device) {
+            supportChatState.device = device;
+            showChatStep2();
+        }
+
+        function showChatStep2() {
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="margin-bottom:20px;">
+                    <strong>What issue are you facing?</strong>
+                </div>
+                <button onclick="selectIssue('login')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>🔐</span> Login problems
+                </button>
+                <button onclick="selectIssue('quiz')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>📝</span> Quiz not loading/starting
+                </button>
+                <button onclick="selectIssue('payment')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>💳</span> Payment issues
+                </button>
+                <button onclick="selectIssue('results')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>📊</span> Results not showing
+                </button>
+                <button onclick="selectIssue('slow')" class="btn" style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>🐌</span> App running slow
+                </button>
+                <button onclick="selectIssue('other')" class="btn btn-secondary" style="width:100%;display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:12px 20px;">
+                    <span>❓</span> Other
+                </button>
+            `;
+        }
+
+        function selectIssue(issue) {
+            supportChatState.issueType = issue;
+            showTroubleshooting();
+        }
+
+        function showTroubleshooting() {
+            const { device, issueType } = supportChatState;
+            let troubleshooting = '';
+
+            const troubleshootingSteps = {
+                login: {
+                    mobile: "1. Close app completely and reopen<br>2. Check internet connection<br>3. Clear app cache (Settings > Apps > FamLearn > Clear Cache)<br>4. Try mobile browser instead<br>5. Reinstall app",
+                    desktop: "1. Refresh page (Ctrl+Shift+R)<br>2. Clear browser cache<br>3. Try Incognito/Private mode<br>4. Try different browser (Chrome/Edge/Firefox)<br>5. Disable browser extensions"
+                },
+                quiz: {
+                    mobile: "1. Check internet connection<br>2. Close other apps<br>3. Restart phone<br>4. Try on WiFi instead of mobile data<br>5. Update app to latest version",
+                    desktop: "1. Refresh page<br>2. Disable ad blocker<br>3. Check internet speed at speedtest.net<br>4. Try different browser<br>5. Clear browser cache"
+                },
+                payment: {
+                    mobile: "1. Check bank SMS for deduction<br>2. Wait 30 minutes for processing<br>3. Check spam folder for receipt<br>4. Check payment history in app<br>5. Contact bank if amount deducted but not credited",
+                    desktop: "1. Check bank SMS for deduction<br>2. Wait 30 minutes for processing<br>3. Check spam folder for receipt<br>4. Check payment history in app<br>5. Contact bank if amount deducted but not credited"
+                },
+                results: {
+                    mobile: "1. Refresh page/app<br>2. Check internet connection<br>3. Wait 1 minute and retry<br>4. Logout and login again<br>5. Check Quiz History section",
+                    desktop: "1. Refresh page/app<br>2. Check internet connection<br>3. Wait 1 minute and retry<br>4. Logout and login again<br>5. Check Quiz History section"
+                },
+                slow: {
+                    mobile: "1. Close background apps<br>2. Restart phone<br>3. Free up storage space<br>4. Update app<br>5. Reinstall app",
+                    desktop: "1. Close other browser tabs<br>2. Restart browser<br>3. Clear cache<br>4. Disable extensions<br>5. Restart computer"
+                },
+                other: {
+                    mobile: "Please describe your issue below and we'll help you.",
+                    desktop: "Please describe your issue below and we'll help you."
+                }
+            };
+
+            troubleshooting = troubleshootingSteps[issueType]?.[device] || "Please describe your issue below.";
+            supportChatState.troubleshootingTried.push(troubleshooting);
+
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="margin-bottom:20px;">
+                    <strong>💡 Try these troubleshooting steps:</strong>
+                    <div style="background:#f0f9ff;padding:15px;border-radius:8px;margin-top:15px;line-height:1.8;">
+                        ${troubleshooting}
+                    </div>
+                </div>
+                <div style="margin-bottom:20px;">
+                    <p style="color:var(--gray);">Did this solve your issue?</p>
+                </div>
+                <button onclick="issueSolved()" class="btn btn-success" style="width:100%;margin-bottom:10px;">
+                    ✅ Yes, thanks!
+                </button>
+                <button onclick="showScreenshotStep()" class="btn btn-secondary" style="width:100%;">
+                    ❌ No, still having problem
+                </button>
+            `;
+        }
+
+        function issueSolved() {
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="text-align:center;padding:40px 20px;">
+                    <div style="font-size:4rem;margin-bottom:20px;">🎉</div>
+                    <h3 style="color:var(--success);margin-bottom:10px;">Great! Happy learning!</h3>
+                    <p style="color:var(--gray);">Glad we could help!</p>
+                    <button onclick="closeSupportChat()" class="btn" style="margin-top:20px;">Close</button>
+                </div>
+            `;
+        }
+
+        function showScreenshotStep() {
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="margin-bottom:20px;">
+                    <strong>📸 Upload Screenshot</strong>
+                    <p style="color:var(--gray);font-size:14px;margin-top:8px;">Please share a screenshot of what you see. This helps us understand the issue better.</p>
+                </div>
+                <div id="screenshotUploadZone" onclick="document.getElementById('screenshotInput').click()" style="border: 2px dashed #ccc; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; margin: 15px 0;background:#f9fafb;">
+                    <div style="font-size: 40px;">📸</div>
+                    <div style="margin:10px 0;color:var(--dark);">Tap/Click to upload screenshot</div>
+                    <div style="font-size: 12px; color: gray;">JPG, PNG up to 5MB</div>
+                    <input type="file" id="screenshotInput" accept="image/*" capture="environment" style="display:none;" onchange="handleScreenshotUpload(event)">
+                </div>
+                <div id="screenshotPreview" style="display:none; margin: 10px 0;text-align:center;">
+                    <img id="screenshotImg" style="max-width: 100%; max-height: 200px; border-radius: 8px;border:2px solid #e5e7eb;">
+                    <div style="margin-top:10px;">
+                        <button onclick="removeScreenshot()" class="btn btn-secondary" style="padding:8px 16px;">❌ Remove</button>
+                    </div>
+                </div>
+                <button onclick="showTicketForm()" class="btn btn-primary" style="width:100%;margin-top:15px;">
+                    Continue →
+                </button>
+            `;
+        }
+
+        function handleScreenshotUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file size
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File size must be less than 5MB', 'error');
+                return;
+            }
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please upload an image file', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                supportChatState.screenshot = e.target.result;
+                document.getElementById('screenshotImg').src = e.target.result;
+                document.getElementById('screenshotPreview').style.display = 'block';
+                document.getElementById('screenshotUploadZone').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeScreenshot() {
+            supportChatState.screenshot = null;
+            document.getElementById('screenshotPreview').style.display = 'none';
+            document.getElementById('screenshotUploadZone').style.display = 'block';
+            document.getElementById('screenshotInput').value = '';
+        }
+
+        function showTicketForm() {
+            const userName = currentUser ? currentUser.name : '';
+            const userEmail = currentUser ? currentUser.email : '';
+            const userPhone = currentUser ? currentUser.phone : '';
+
+            const chatBody = document.getElementById('supportChatBody');
+            chatBody.innerHTML = `
+                <div style="margin-bottom:20px;">
+                    <strong>📋 Submit Support Ticket</strong>
+                    <p style="color:var(--gray);font-size:14px;margin-top:8px;">We'll get back to you within 24 hours.</p>
+                </div>
+                <form onsubmit="submitSupportTicket(event)" id="supportTicketForm">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="ticketName" value="${userName}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="ticketEmail" value="${userEmail}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone (Optional)</label>
+                        <input type="tel" id="ticketPhone" value="${userPhone}">
+                    </div>
+                    <div class="form-group">
+                        <label>Describe what happened</label>
+                        <textarea id="ticketDescription" rows="4" required placeholder="Tell us what you were doing when the issue occurred..." style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-family:inherit;"></textarea>
+                    </div>
+                    ${supportChatState.screenshot ? '<div style="color:var(--success);font-size:12px;margin-bottom:15px;">✅ Screenshot attached</div>' : ''}
+                    <button type="submit" class="btn btn-primary" style="width:100%;">
+                        Submit Ticket
+                    </button>
+                </form>
+            `;
+        }
+
+        async function submitSupportTicket(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('ticketName').value.trim();
+            const email = document.getElementById('ticketEmail').value.trim();
+            const phone = document.getElementById('ticketPhone').value.trim();
+            const description = document.getElementById('ticketDescription').value.trim();
+
+            if (!name || !email || !description) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+
+            showLoading('Submitting ticket...');
+
+            try {
+                const ticketData = {
+                    user_id: currentUser ? currentUser.id : null,
+                    user_name: name,
+                    user_email: email,
+                    user_phone: phone,
+                    device_type: supportChatState.device,
+                    issue_type: supportChatState.issueType,
+                    description: description,
+                    screenshot: supportChatState.screenshot,
+                    troubleshooting_tried: supportChatState.troubleshootingTried.join('\n\n'),
+                    status: 'open'
+                };
+
+                const { data, error } = await supabaseClient
+                    .from('support_tickets')
+                    .insert([ticketData])
+                    .select();
+
+                if (error) throw error;
+
+                const ticketId = data[0].id.substring(0, 8);
+
+                hideLoading();
+                const chatBody = document.getElementById('supportChatBody');
+                chatBody.innerHTML = `
+                    <div style="text-align:center;padding:40px 20px;">
+                        <div style="font-size:4rem;margin-bottom:20px;">✅</div>
+                        <h3 style="color:var(--success);margin-bottom:15px;">Ticket Created!</h3>
+                        <div style="background:#f0f9ff;padding:15px;border-radius:8px;margin-bottom:20px;">
+                            <p style="font-size:14px;margin-bottom:8px;">Ticket #<strong>${ticketId}</strong></p>
+                            <p style="font-size:12px;color:var(--gray);">Our team will contact you within 24 hours at <strong>${email}</strong></p>
+                        </div>
+                        <button onclick="closeSupportChat()" class="btn" style="width:100%;">Close</button>
+                    </div>
+                `;
+            } catch (error) {
+                hideLoading();
+                console.error('Error submitting ticket:', error);
+                showToast('Error submitting ticket: ' + error.message, 'error');
+            }
         }
 
         // ========================================
@@ -10358,6 +10751,18 @@ Sent by: ${currentUser.name || 'Tutor'}, ${currentUser.institute_name || 'FamLea
 
             console.log('📲 WhatsApp share initiated');
             showToast('Opening WhatsApp...', 'success');
+        }
+
+        // Print student report
+        function printStudentReport() {
+            if (!currentStudentData || !currentStudentData.student) {
+                showToast('Please load student details first', 'error');
+                return;
+            }
+
+            // Use browser print functionality
+            window.print();
+            console.log('🖨️ Print report initiated');
         }
 
         // Helper function to render difficulty analytics
