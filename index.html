@@ -10184,6 +10184,9 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     ? Math.round(results.reduce((a, r) => a + (r.score / r.total_questions * 100), 0) / quizCount)
                     : 0;
 
+                // Declare topicStats at function scope for WhatsApp sharing
+                let topicStats = null;
+
                 document.getElementById('studentQuizCount').textContent = quizCount;
                 document.getElementById('studentAvgScore').textContent = avgScore + '%';
 
@@ -10233,7 +10236,7 @@ Return ONLY JSON: [{"question":"Q","options":["A","B","C","D"],"correct":0,"expl
                     });
 
                     // Topic performance (existing code enhanced)
-                    const topicStats = {};
+                    topicStats = {};
                     results.forEach(r => {
                         const topicName = r.topic || r.subject || 'General';
                         if (!topicStats[topicName]) topicStats[topicName] = { total: 0, correct: 0, count: 0 };
